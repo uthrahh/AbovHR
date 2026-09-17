@@ -19,7 +19,7 @@ export default function InstitutionsMarketingPage() {
     <div>
       <section className="border-b border-[var(--color-border)] bg-[var(--color-surface)] py-14">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <h1 className="font-display text-3xl text-[var(--color-text-primary)] sm:text-4xl">Support your students' careers</h1>
+          <h1 className="font-display text-3xl text-[var(--color-text-primary)] sm:text-4xl">Support your students&rsquo; careers</h1>
           <p className="mt-4 text-base text-[var(--color-text-secondary)]">
             Give students career assessments, skill-gap analysis, and access to the same job marketplace candidates use —
             with visibility into their progress as a cohort.

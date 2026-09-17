@@ -40,8 +40,8 @@ export default function CookiePolicyPage() {
       <LegalSection heading="How consent works here">
         <p>
           On your first visit, a banner lets you accept all optional categories, reject them, or choose which ones to allow.
-          Necessary cookies are never optional. Nothing outside the necessary category is loaded until you've made a choice —
-          we don't set analytics or marketing cookies by default.
+          Necessary cookies are never optional. Nothing outside the necessary category is loaded until you&rsquo;ve made a choice —
+          we don&rsquo;t set analytics or marketing cookies by default.
         </p>
       </LegalSection>
 
@@ -53,7 +53,7 @@ export default function CookiePolicyPage() {
               <tr className="border-b border-[var(--color-border)] text-left">
                 <th scope="col" className="py-2 pr-4 font-semibold text-[var(--color-text-primary)]">Category</th>
                 <th scope="col" className="py-2 pr-4 font-semibold text-[var(--color-text-primary)]">Purpose</th>
-                <th scope="col" className="py-2 pr-4 font-semibold text-[var(--color-text-primary)]">What's set today</th>
+                <th scope="col" className="py-2 pr-4 font-semibold text-[var(--color-text-primary)]">What&rsquo;s set today</th>
                 <th scope="col" className="py-2 font-semibold text-[var(--color-text-primary)]">Can you disable it?</th>
               </tr>
             </thead>
@@ -80,7 +80,7 @@ export default function CookiePolicyPage() {
       </LegalSection>
 
       <LegalSection heading="Changing your choice">
-        <p>You can change your cookie preferences at any time by clearing your browser's site data for this domain, which will show the consent banner again on your next visit. A persistent in-page &quot;manage preferences&quot; control is planned.</p>
+        <p>You can change your cookie preferences at any time by clearing your browser&rsquo;s site data for this domain, which will show the consent banner again on your next visit. A persistent in-page &quot;manage preferences&quot; control is planned.</p>
       </LegalSection>
     </LegalLayout>
   );

@@ -50,11 +50,11 @@ export default async function DataRequestPage() {
             <ul className="mt-1 list-disc pl-5 text-sm text-[var(--color-text-secondary)]">
               <li>Your profile, resumes, and learning progress</li>
               <li>Saved jobs and job alerts</li>
-              <li>Messages you've sent through the platform</li>
+              <li>Messages you&rsquo;ve sent through the platform</li>
             </ul>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-              Applications you've submitted may be retained by the employer you applied to, separately from your Abov
-              account, consistent with their own record-keeping obligations. This action can't be undone once processed.
+              Applications you&rsquo;ve submitted may be retained by the employer you applied to, separately from your Abov
+              account, consistent with their own record-keeping obligations. This action can&rsquo;t be undone once processed.
             </p>
             <div className="mt-3">
               <DataRequestForm type="DELETE" label="Request account deletion" />

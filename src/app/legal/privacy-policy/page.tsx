@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection heading="What we collect and why">
-        <p>We collect the following categories of personal data. Each is tied to a specific product function — we don't collect data we don't have a use for.</p>
+        <p>We collect the following categories of personal data. Each is tied to a specific product function — we don&rsquo;t collect data we don&rsquo;t have a use for.</p>
         <ul className="list-disc pl-5">
           <li><strong>Account data</strong> — name, email, password (stored as a salted hash, never in plain text), account role. Used to authenticate you and operate your account.</li>
           <li><strong>Candidate profile data</strong> — education, work experience, skills, projects, certifications, languages, salary expectations, location and work preferences, resume files. Used to calculate job match scores, power search and recommendations, and share with employers when you apply to their jobs.</li>
@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
           <li><strong>Application and interview data</strong> — jobs you apply to, application status, interview scheduling, employer notes attached to your application. Used to run the hiring pipeline between you and an employer.</li>
           <li><strong>Learning and assessment data</strong> — career assessment responses, learning path progress, skill self-ratings. Used to generate career and learning suggestions and track your progress.</li>
           <li><strong>Consent and preference records</strong> — cookie choices, marketing email opt-in/opt-out, terms acceptance, with a timestamp and policy version. Used to demonstrate and honor your choices.</li>
-          <li><strong>Technical data</strong> — IP address (used transiently for rate-limiting abusive requests; see the cookie policy for what's stored longer-term), session tokens, basic request logs. Used for security and to keep you signed in.</li>
+          <li><strong>Technical data</strong> — IP address (used transiently for rate-limiting abusive requests; see the cookie policy for what&rsquo;s stored longer-term), session tokens, basic request logs. Used for security and to keep you signed in.</li>
         </ul>
       </LegalSection>
 
@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
         <p>
           Where the Digital Personal Data Protection Act, 2023 (DPDP Act) applies, we process personal data on the following
           bases: your <strong>consent</strong> (for example, creating an account, uploading a resume, or opting into marketing
-          email), and <strong>legitimate use</strong> as contemplated under the Act for purposes like fulfilling a request you've
+          email), and <strong>legitimate use</strong> as contemplated under the Act for purposes like fulfilling a request you&rsquo;ve
           made of us (for example, submitting a job application) or for security and fraud prevention. Where we rely on consent,
           you can withdraw it at any time through your account settings or by contacting us — see &quot;Your rights&quot; below.
         </p>
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection heading="Who we share data with">
         <p>
-          <strong>Employers and institutions</strong> — when you apply to a job, the employer's hiring team can see your
+          <strong>Employers and institutions</strong> — when you apply to a job, the employer&rsquo;s hiring team can see your
           candidate profile, resume, and application details for that job. Institution staff can see progress data for students
           in cohorts they administer.
         </p>
@@ -68,9 +68,9 @@ export default function PrivacyPolicyPage() {
           <Link href="/data-request" className="underline">
             manage my data
           </Link>
-          ), we remove or anonymize personal data within a reasonable period, except where we're required to retain records
+          ), we remove or anonymize personal data within a reasonable period, except where we&rsquo;re required to retain records
           longer for legal, tax, or dispute-resolution purposes (for example, records of a completed hiring transaction).
-          Application records tied to a specific employer's job may be retained by that employer separately from your Abov
+          Application records tied to a specific employer&rsquo;s job may be retained by that employer separately from your Abov
           account per their own record-keeping obligations.
         </p>
       </LegalSection>
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
           Abov is built for job seekers, students, and professionals, and some candidate and institution users may be under 18
           (for example, students exploring internships through a school or college cohort). We have not yet implemented
           age verification or the verifiable parental/guardian consent mechanism the DPDP Act requires for processing a
-          child's personal data. This is flagged as an open item in our compliance risk register and must be resolved before
+          child&rsquo;s personal data. This is flagged as an open item in our compliance risk register and must be resolved before
           onboarding users known to be under 18 in production.
         </p>
       </LegalSection>

@@ -57,7 +57,7 @@ export default function TalentServicesPage() {
       </div>
 
       <div className="mt-10 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-sunken)] p-6 text-center">
-        <p className="text-sm text-[var(--color-text-secondary)]">Tell us what you're trying to solve and we'll get back to you.</p>
+        <p className="text-sm text-[var(--color-text-secondary)]">Tell us what you&rsquo;re trying to solve and we&rsquo;ll get back to you.</p>
         <LinkButton href="/contact" className="mt-3">
           Contact the team
         </LinkButton>

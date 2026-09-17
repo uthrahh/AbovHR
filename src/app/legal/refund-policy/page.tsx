@@ -27,7 +27,7 @@ export default function RefundPolicyPage() {
           <li><strong>Refund window</strong> — a defined window (to be set before launch, informed by applicable Indian consumer protection requirements) during which an unused subscription can be cancelled for a full refund.</li>
           <li><strong>Subscription cancellation</strong> — cancelling stops future billing; it does not retroactively refund the current billing period except within the refund window above.</li>
           <li><strong>Non-refundable items</strong> — usage already consumed within a billing period (e.g., job posts already published) would typically not be refundable outside the window.</li>
-          <li><strong>Processing time</strong> — approved refunds would be returned to the original payment method within the payment provider's standard processing time (typically 5–10 business days).</li>
+          <li><strong>Processing time</strong> — approved refunds would be returned to the original payment method within the payment provider&rsquo;s standard processing time (typically 5–10 business days).</li>
           <li><strong>How to request one</strong> — through the <Link href="/contact" className="underline">contact page</Link>, referencing the company account and invoice.</li>
         </ul>
       </LegalSection>

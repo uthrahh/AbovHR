@@ -23,13 +23,11 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: UserRole;
-    status: UserStatus;
-  }
-}
+type AppJWT = {
+  id: string;
+  role: UserRole;
+  status: UserStatus;
+};
 
 export const authEdgeConfig: NextAuthConfig = {
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
@@ -40,17 +38,19 @@ export const authEdgeConfig: NextAuthConfig = {
   providers: [],
   callbacks: {
     async jwt({ token, user }) {
+      const appToken = token as typeof token & Partial<AppJWT>;
       if (user) {
-        token.id = user.id as string;
-        token.role = user.role;
-        token.status = user.status;
+        appToken.id = user.id as string;
+        appToken.role = user.role;
+        appToken.status = user.status;
       }
-      return token;
+      return appToken;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      session.user.status = token.status;
+      const appToken = token as typeof token & AppJWT;
+      session.user.id = appToken.id;
+      session.user.role = appToken.role;
+      session.user.status = appToken.status;
       return session;
     },
   },

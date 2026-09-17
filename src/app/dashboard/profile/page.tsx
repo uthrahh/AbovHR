@@ -5,6 +5,9 @@ import { BasicInfoForm } from "@/components/profile/basic-info-form";
 import { EducationSection } from "@/components/profile/education-section";
 import { ExperienceSection } from "@/components/profile/experience-section";
 import { SkillsSection } from "@/components/profile/skills-section";
+import { ProjectsSection } from "@/components/profile/projects-section";
+import { CertificationsSection } from "@/components/profile/certifications-section";
+import { LanguagesSection } from "@/components/profile/languages-section";
 import { ResumeSection } from "@/components/profile/resume-section";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { computeProfileCompleteness } from "@/lib/profile/completeness";
@@ -20,6 +23,9 @@ export default async function ProfilePage() {
       educations: { orderBy: { startYear: "desc" } },
       experiences: { orderBy: { startDate: "desc" } },
       skills: { include: { skill: true }, orderBy: { skill: { name: "asc" } } },
+      projects: { orderBy: { createdAt: "desc" } },
+      certifications: { orderBy: { createdAt: "desc" } },
+      languages: { orderBy: { name: "asc" } },
       resumes: { orderBy: { uploadedAt: "desc" } },
     },
   });
@@ -89,6 +95,18 @@ export default async function ProfilePage() {
 
       <ProfileSection title="Skills">
         <SkillsSection items={profile.skills.map((s) => ({ skillId: s.skillId, name: s.skill.name, proficiency: s.proficiency }))} />
+      </ProfileSection>
+
+      <ProfileSection title="Projects">
+        <ProjectsSection items={profile.projects} />
+      </ProfileSection>
+
+      <ProfileSection title="Certifications">
+        <CertificationsSection items={profile.certifications} />
+      </ProfileSection>
+
+      <ProfileSection title="Languages">
+        <LanguagesSection items={profile.languages} />
       </ProfileSection>
 
       <ProfileSection title="Resume">

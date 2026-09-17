@@ -190,3 +190,103 @@ export async function setPrimaryResumeAction(resumeId: string) {
   ]);
   revalidatePath("/dashboard/profile");
 }
+
+const projectSchema = z.object({
+  title: z.string().trim().min(2).max(150),
+  description: z.string().trim().max(1000).optional(),
+  url: z.string().trim().url().optional().or(z.literal("")),
+  skillsUsed: z.string().trim().max(300).optional(),
+});
+
+export async function addProjectAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = projectSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description") || undefined,
+    url: formData.get("url") || "",
+    skillsUsed: formData.get("skillsUsed") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: "Enter a project title." };
+
+  await prisma.project.create({
+    data: {
+      candidateProfileId: profile.id,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      url: parsed.data.url || undefined,
+      skillsUsed: parsed.data.skillsUsed ? parsed.data.skillsUsed.split(",").map((s) => s.trim()).filter(Boolean) : [],
+    },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteProjectAction(projectId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.project.deleteMany({ where: { id: projectId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const certificationSchema = z.object({
+  name: z.string().trim().min(2).max(150),
+  issuer: z.string().trim().min(2).max(150),
+  issueDate: z.string().optional(),
+  credentialUrl: z.string().trim().url().optional().or(z.literal("")),
+});
+
+export async function addCertificationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = certificationSchema.safeParse({
+    name: formData.get("name"),
+    issuer: formData.get("issuer"),
+    issueDate: formData.get("issueDate") || undefined,
+    credentialUrl: formData.get("credentialUrl") || "",
+  });
+  if (!parsed.success) return { ok: false, message: "Enter a certification name and issuer." };
+
+  await prisma.certification.create({
+    data: {
+      candidateProfileId: profile.id,
+      name: parsed.data.name,
+      issuer: parsed.data.issuer,
+      issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : undefined,
+      credentialUrl: parsed.data.credentialUrl || undefined,
+    },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteCertificationAction(certificationId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.certification.deleteMany({ where: { id: certificationId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const languageSchema = z.object({
+  name: z.string().trim().min(2).max(60),
+  proficiency: z.enum(["BASIC", "CONVERSATIONAL", "FLUENT", "NATIVE"]),
+});
+
+export async function addLanguageAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = languageSchema.safeParse({
+    name: formData.get("name"),
+    proficiency: formData.get("proficiency") || "CONVERSATIONAL",
+  });
+  if (!parsed.success) return { ok: false, message: "Enter a language name." };
+
+  await prisma.candidateLanguage.upsert({
+    where: { candidateProfileId_name: { candidateProfileId: profile.id, name: parsed.data.name } },
+    update: { proficiency: parsed.data.proficiency },
+    create: { candidateProfileId: profile.id, name: parsed.data.name, proficiency: parsed.data.proficiency },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteLanguageAction(languageId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.candidateLanguage.deleteMany({ where: { id: languageId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}

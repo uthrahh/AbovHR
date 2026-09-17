@@ -22,7 +22,9 @@ export function MobileNav({
   const pathname = usePathname();
 
   useEffect(() => {
-    setOpen(false);
+    // Close the drawer on navigation. The dialog's onClose handler (below)
+    // is what actually resets `open` — closing an already-closed <dialog>
+    // is a no-op, so this never fires setState redundantly.
     dialogRef.current?.close();
   }, [pathname]);
 

@@ -23,7 +23,7 @@ export default function TermsPage() {
         <p>
           You must provide accurate information when creating an account and keep your password secure. Accounts are
           role-based (candidate, employer, recruiter, institution, educator, or admin) and you may only access features and
-          data appropriate to your role. You're responsible for activity that happens under your account.
+          data appropriate to your role. You&rsquo;re responsible for activity that happens under your account.
         </p>
       </LegalSection>
 
@@ -32,8 +32,8 @@ export default function TermsPage() {
         <ul className="list-disc pl-5">
           <li>Post false, misleading, or discriminatory job listings or profile information.</li>
           <li>Use the platform to collect candidate or company data for purposes unrelated to legitimate hiring or job-seeking.</li>
-          <li>Attempt to bypass rate limits, security controls, or access data you're not authorized to see.</li>
-          <li>Upload malicious files or content that infringes someone else's intellectual property.</li>
+          <li>Attempt to bypass rate limits, security controls, or access data you&rsquo;re not authorized to see.</li>
+          <li>Upload malicious files or content that infringes someone else&rsquo;s intellectual property.</li>
           <li>Use automated tools to scrape the platform at scale without permission.</li>
         </ul>
         <p>We may suspend or terminate accounts that violate these terms, following our moderation process where practicable.</p>

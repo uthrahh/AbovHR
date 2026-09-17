@@ -37,7 +37,6 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
   return (
     <article className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
-      {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-[var(--color-text-muted)]">

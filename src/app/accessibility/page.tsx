@@ -28,7 +28,7 @@ export default function AccessibilityPage() {
         <p>
           This is an actively developed build. Areas that still need a dedicated accessibility pass before this could be
           considered production-ready include: a full screen-reader walkthrough of the employer ATS pipeline and multi-step
-          forms, verification of table semantics on data-heavy dashboard views, and a formal audit against WCAG 2.2's newer
+          forms, verification of table semantics on data-heavy dashboard views, and a formal audit against WCAG 2.2&rsquo;s newer
           success criteria (e.g. focus appearance, dragging movements) by someone using assistive technology day-to-day.
         </p>
       </LegalSection>

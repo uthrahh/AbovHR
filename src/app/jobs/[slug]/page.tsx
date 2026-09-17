@@ -133,7 +133,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav aria-label="Breadcrumb" className="text-sm text-[var(--color-text-muted)]">

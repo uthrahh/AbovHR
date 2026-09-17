@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth/rbac";
+import type { Prisma } from "@/generated/prisma/client";
 
 async function logAudit(actorUserId: string, action: string, targetType: string, targetId: string, metadata?: Record<string, unknown>) {
-  await prisma.auditLog.create({ data: { actorUserId, action, targetType, targetId, metadata } });
+  await prisma.auditLog.create({
+    data: { actorUserId, action, targetType, targetId, metadata: metadata as Prisma.InputJsonValue | undefined },
+  });
 }
 
 export async function setUserStatusAction(userId: string, status: "ACTIVE" | "SUSPENDED") {

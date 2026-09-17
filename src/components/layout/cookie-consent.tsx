@@ -29,7 +29,10 @@ export function CookieConsent() {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
+    // Reads document.cookie, which doesn't exist during SSR — this has to run
+    // client-side, post-hydration, to avoid a server/client markup mismatch.
     const existing = parseConsentCookie(readCookie(CONSENT_COOKIE_NAME));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!existing) setVisible(true);
   }, []);
 

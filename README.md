@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Abov
 
-## Getting Started
+A career platform for finding jobs and internships, planning your next role, closing skill gaps, and connecting candidates with employers and institutions — built by **Abov HR**.
 
-First, run the development server:
+Full product/engineering documentation lives in [`docs/`](docs/):
+
+- [`docs/architecture.md`](docs/architecture.md) — system architecture, feature map, page map, database schema, auth/RBAC model, API surface, and what's explicitly *not* implemented yet.
+- [`docs/privacy-and-data.md`](docs/privacy-and-data.md) — data flow, third-party dependency inventory, cookie inventory.
+- [`docs/audits.md`](docs/audits.md) — accessibility, SEO, performance, and security self-review.
+- [`docs/legal-and-ip.md`](docs/legal-and-ip.md) — legal/compliance risk register and IP/asset register.
+- [`docs/project-status.md`](docs/project-status.md) — broken-link report and remaining implementation tasks.
+- [`docs/deployment-checklist.md`](docs/deployment-checklist.md) — how to actually ship this.
+
+## Stack
+
+Next.js 16 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · PostgreSQL + Prisma · Auth.js v5 (Credentials, JWT sessions).
+
+## Local development
+
+Prerequisites: Node 20+, a local PostgreSQL instance.
 
 ```bash
+npm install
+cp .env.example .env   # fill in DATABASE_URL and AUTH_SECRET
+npx prisma migrate dev
+npm run db:seed        # optional — loads fictional demo data
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 (or whatever port the CLI reports if 3000 is taken).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Demo accounts (only if you ran `npm run db:seed`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All use password `DemoPass123!`:
 
-## Learn More
+| Email | Role |
+|---|---|
+| `admin@abov.demo` | Admin |
+| `educator@bellwood.demo` | Institution admin |
+| `hiring@verdantsystems.demo` | Employer |
+| `hiring@northbridgeanalytics.demo` | Employer |
+| `arjun.rao@abov.demo` | Candidate |
+| `sneha.iyer@abov.demo` | Candidate |
 
-To learn more about Next.js, take a look at the following resources:
+This is fictional seed data for local development — see `prisma/seed/index.ts`. Never run the seed script against a production database.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build (full type-check) |
+| `npm run start` | Run the production build |
+| `npm run lint` | ESLint |
+| `npm run db:migrate` | `prisma migrate dev` |
+| `npm run db:seed` | Load demo fixture data |
+| `npm run db:studio` | Prisma Studio (browse the database) |
