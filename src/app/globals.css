@@ -1,26 +1,150 @@
 @import "tailwindcss";
 
+/*
+  Design tokens — Abov brand system.
+  Accent hue is fixed by brand (#CC5500 family); every text/background
+  pairing below is chosen to independently clear WCAG 2.2 AA contrast
+  rather than inheriting the raw brand hex into text contexts.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #faf8f5;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-sunken: #f2efe9;
+
+  --color-border: #e4dfd6;
+  --color-border-strong: #cfc7b8;
+
+  --color-text-primary: #1c1a17;
+  --color-text-secondary: #4a453d;
+  --color-text-muted: #797263;
+  --color-text-on-accent: #fffaf5;
+  --color-text-on-dark: #f4f1ea;
+
+  /* Brand orange family. -decorative is for large surfaces/icons/graphics
+     (>=3:1 contrast is enough). -text is darkened for AA body-text contrast. */
+  --color-accent-decorative: #cc5500;
+  --color-accent-text: #a64400;
+  --color-accent-text-hover: #8a3900;
+  --color-accent-subtle-bg: #fbe7d6;
+  --color-accent-highlight: #e07a1f;
+
+  --color-success: #1e7a42;
+  --color-success-subtle: #e5f3ea;
+  --color-warning: #92600a;
+  --color-warning-subtle: #fbeed9;
+  --color-error: #b3261e;
+  --color-error-subtle: #fbe7e5;
+  --color-focus: #1d4ed8;
+
+  --color-nav-bg: #1c1a17;
+  --color-nav-border: #34302a;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.06);
+  --shadow-md: 0 4px 16px rgba(28, 26, 23, 0.08);
+  --shadow-lg: 0 12px 32px rgba(28, 26, 23, 0.12);
+
+  --space-unit: 4px;
+
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-sunken: var(--color-surface-sunken);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-on-accent: var(--color-text-on-accent);
+  --color-text-on-dark: var(--color-text-on-dark);
+  --color-accent-decorative: var(--color-accent-decorative);
+  --color-accent-text: var(--color-accent-text);
+  --color-accent-text-hover: var(--color-accent-text-hover);
+  --color-accent-subtle-bg: var(--color-accent-subtle-bg);
+  --color-accent-highlight: var(--color-accent-highlight);
+  --color-success: var(--color-success);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-warning: var(--color-warning);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-error: var(--color-error);
+  --color-error-subtle: var(--color-error-subtle);
+  --color-focus: var(--color-focus);
+  --color-nav-bg: var(--color-nav-bg);
+  --color-nav-border: var(--color-nav-border);
+  --font-display: var(--font-newsreader);
+  --font-sans: var(--font-plex-sans);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Visible, consistent focus ring everywhere — never rely on color alone. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+a {
+  color: var(--color-accent-text);
+  text-underline-offset: 3px;
+}
+a:hover {
+  color: var(--color-accent-text-hover);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-nav-bg);
+  color: var(--color-text-on-dark);
+  padding: 12px 20px;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Minimum touch target for interactive controls on touch surfaces. */
+button, a[role="button"], input[type="checkbox"], input[type="radio"] {
+  min-height: 24px;
 }
