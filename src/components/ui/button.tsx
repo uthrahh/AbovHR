@@ -5,8 +5,11 @@ import { cn } from "@/lib/utils";
 import { SpinnerIcon } from "@/components/ui/icons";
 
 const VARIANT_CLASSES = {
+  // Black text on the brighter brand orange clears WCAG AA (4.86:1) — black
+  // on the darker --color-accent-text would not (3.44:1), so the fill uses
+  // --color-accent-decorative here rather than the usual text-safe shade.
   primary:
-    "bg-[var(--color-accent-text)] text-[var(--color-text-on-accent)] hover:bg-[var(--color-accent-text-hover)] border border-transparent",
+    "bg-[var(--color-accent-decorative)] text-[var(--color-text-primary)] hover:bg-[var(--color-accent-text)] border border-transparent",
   secondary:
     "bg-transparent text-[var(--color-text-primary)] border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-sunken)]",
   ghost:
@@ -14,7 +17,7 @@ const VARIANT_CLASSES = {
   danger:
     "bg-[var(--color-error)] text-white border border-transparent hover:opacity-90",
   onDark:
-    "bg-[var(--color-accent-decorative)] text-white border border-transparent hover:bg-[var(--color-accent-text-hover)]",
+    "bg-[var(--color-accent-decorative)] text-[var(--color-text-primary)] hover:bg-[var(--color-accent-text)] border border-transparent",
 } as const;
 
 const SIZE_CLASSES = {

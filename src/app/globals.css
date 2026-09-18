@@ -86,39 +86,48 @@
   --radius-lg: var(--radius-lg);
 }
 
-* {
-  border-color: var(--color-border);
-}
+/*
+  Tailwind v4 puts its own reset/utilities inside CSS cascade layers. Unlayered
+  CSS always wins over layered CSS regardless of specificity, so these base
+  styles must live in @layer base too — otherwise a utility class like
+  text-[var(--color-text-muted)] on an <a> can never override the plain `a {}`
+  rule below, no matter how specific it looks.
+*/
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-}
+  body {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  }
 
-h1, h2, h3, .font-display {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display), ui-serif, Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
 
-/* Visible, consistent focus ring everywhere — never rely on color alone. */
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+  /* Visible, consistent focus ring everywhere — never rely on color alone. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 
-a {
-  color: var(--color-accent-text);
-  text-underline-offset: 3px;
-}
-a:hover {
-  color: var(--color-accent-text-hover);
+  a {
+    color: var(--color-accent-text);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--color-accent-text-hover);
+  }
 }
 
 .skip-link {
@@ -147,4 +156,49 @@ a:hover {
 /* Minimum touch target for interactive controls on touch surfaces. */
 button, a[role="button"], input[type="checkbox"], input[type="radio"] {
   min-height: 24px;
+}
+
+/* ---------------------------------------------------------------------------
+   Installed-app shell (PWA "standalone" mode only)
+
+   Everything below is inert by default — it only activates once
+   `data-standalone="true"` is set on <html>, which happens client-side (see
+   AppShellBootstrap) exclusively when the site is running as an installed
+   app (Android "standalone"/"minimal-ui" display mode, or iOS
+   navigator.standalone). A normal browser visit — including on a phone —
+   never gets this attribute and renders the unmodified website.
+   ------------------------------------------------------------------------ */
+:root {
+  --app-top-bar-height: 52px;
+  --app-bottom-nav-height: 60px;
+}
+
+/* Website chrome (top marketing nav, footer) is hidden only in app mode. */
+:root[data-standalone="true"] .website-chrome {
+  display: none !important;
+}
+
+/* App-only chrome (top bar, bottom tabs, menu sheet) is hidden until app mode. */
+.app-chrome {
+  display: none;
+}
+:root[data-standalone="true"] .app-chrome {
+  display: flex;
+}
+
+:root[data-standalone="true"] #main-content {
+  padding-top: calc(var(--app-top-bar-height) + env(safe-area-inset-top));
+  padding-bottom: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+/* Keep the cookie banner above the app tab bar instead of underneath it. */
+:root[data-standalone="true"] .cookie-consent-banner {
+  bottom: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+/* Native-app feel: no rubber-band overscroll, no long-press callouts/highlight. */
+:root[data-standalone="true"] body {
+  overscroll-behavior-y: contain;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }

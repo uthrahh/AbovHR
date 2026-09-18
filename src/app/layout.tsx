@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Newsreader, IBM_Plex_Sans } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
+import { AppShell } from "@/components/layout/app-shell";
+import { appShellBootstrapScript } from "@/components/layout/app-shell-bootstrap";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
@@ -47,16 +50,32 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Abov",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1c1a17",
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${newsreader.variable} ${plexSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <Script id="app-shell-bootstrap" strategy="beforeInteractive">
+          {appShellBootstrapScript()}
+        </Script>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
         <Navbar />
+        <AppShell />
         <main id="main-content" className="flex-1">
           {children}
         </main>
