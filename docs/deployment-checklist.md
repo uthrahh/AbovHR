@@ -1,13 +1,21 @@
 # Production deployment checklist
 
+## Live deployment
+
+Deployed to Vercel at **https://abovhr.vercel.app**, backed by a Neon Postgres database (Vercel Marketplace integration), seeded with the same fictional demo data described in the README. This is a demo/portfolio-quality deployment, not a production launch with real users — treat the data and accounts accordingly (shared demo password, no real payment/email integration, etc.).
+
+### Incident: Prisma query engine not found on some routes (resolved)
+
+The first deploy attempt failed at runtime with `PrismaClientInitializationError: could not locate the Query Engine for runtime "rhel-openssl-3.0.x"` — but only on some routes (the homepage), not others (`/jobs`, `/sitemap.xml`). Root cause: the newer `prisma-client` generator with a custom output path (`src/generated/prisma`) hit a per-route file-tracing gap under Next.js 16 + Turbopack on Vercel — some routes' serverless bundles included the native query engine binary, others didn't, for reasons that weren't fully diagnosable from the outside. Fix: switched to the classic, far more battle-tested `prisma-client-js` generator (default `node_modules/.prisma/client` output), which Next's tracer bundles reliably, and added `binaryTargets = ["native", "rhel-openssl-3.0.x"]` so both local dev (Windows/macOS/Linux) and Vercel's Linux function runtime get the engine they each need. Also added a project-level `postinstall: "prisma generate"` script — Prisma's own nested postinstall hook can be skipped by npm when Vercel reuses a cached `node_modules`, silently leaving a stale generated client; a top-level postinstall always reruns.
+
 ## Before first deploy
 
-- [ ] Push this repository to a Git host (GitHub/GitLab).
-- [ ] Provision a managed PostgreSQL instance (Neon, Supabase, Railway, RDS, etc.) — do not point production at the local dev database used in this build.
-- [ ] Generate a fresh `AUTH_SECRET` for production (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`) — never reuse the dev value committed nowhere but also never reused.
-- [ ] Set `APP_URL` to the real production domain (used for metadata, sitemap, OG tags).
-- [ ] Run `DATABASE_URL="<prod>" npx prisma migrate deploy` against the production database.
-- [ ] Decide whether to run the seed script in production. It's dev/demo fixture data (fictional companies, jobs, and accounts with a shared password) — **do not seed a real production database with it.**
+- [x] Push this repository to a Git host — already connected (`github.com/uthrahh/AbovHR`, auto-synced by environment tooling).
+- [x] Provision a managed PostgreSQL instance — Neon, via Vercel's Marketplace integration.
+- [x] Generate a fresh `AUTH_SECRET` for production, distinct from the local dev one — set via `vercel env add`.
+- [x] `APP_URL` — not set explicitly; `src/lib/site-url.ts` auto-detects Vercel's own assigned domain via `VERCEL_PROJECT_PRODUCTION_URL`, so this wasn't needed. Set `APP_URL` explicitly only if you attach a custom domain and want metadata to reference that instead.
+- [x] Ran `prisma migrate deploy` against the production database.
+- [x] Seeded demo/fixture data — appropriate here since this is a demo deployment, not a real launch. **Do not do this for an actual production launch with real users** — see the live-deployment note above.
 
 ## Known gaps to close before real users touch it
 

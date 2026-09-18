@@ -9,7 +9,7 @@
  * Run with: npm run db:seed
  */
 import "dotenv/config";
-import { PrismaClient } from "../../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();

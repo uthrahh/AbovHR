@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import type { UserRole } from "@/generated/prisma/enums";
+import type { UserRole } from "@prisma/client";
 
 export class UnauthorizedError extends Error {
   constructor(message = "Not authenticated.") {

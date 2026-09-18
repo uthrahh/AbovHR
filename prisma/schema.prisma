@@ -1,9 +1,17 @@
 // Abov HR — core data model.
 // See /docs/architecture/database.md for entity notes and indexing rationale.
 
+// Using the classic "prisma-client-js" generator (default node_modules/.prisma
+// output) rather than the newer "prisma-client" generator's custom output path.
+// The classic generator's output location is what Next.js's file tracing (on
+// Turbopack, on Vercel) reliably bundles the native query engine binary for —
+// the newer generator with a custom src/ output path hit an intermittent
+// "Query Engine not found" error on some (not all) routes in production,
+// consistent with a per-route tracing gap for the custom path. See
+// docs/architecture.md for the incident note.
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

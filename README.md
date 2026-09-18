@@ -2,6 +2,8 @@
 
 A career platform for finding jobs and internships, planning your next role, closing skill gaps, and connecting candidates with employers and institutions — built by **Abov HR**.
 
+**Live demo:** https://abovhr.vercel.app (seeded with fictional demo data — see accounts below)
+
 Full product/engineering documentation lives in [`docs/`](docs/):
 
 - [`docs/architecture.md`](docs/architecture.md) — system architecture, feature map, page map, database schema, auth/RBAC model, API surface, and what's explicitly *not* implemented yet.

@@ -2,7 +2,13 @@ import { mkdir, writeFile, unlink, readFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? "./uploads");
+// On Vercel the deployment bundle is read-only outside /tmp, and /tmp itself
+// doesn't persist across invocations — uploaded files can be written and read
+// back within the same request but are NOT durable storage. This keeps the
+// upload flow from hard-crashing on a serverless deploy; real persistence
+// still requires swapping this for object storage (see docs/architecture.md).
+const DEFAULT_UPLOAD_DIR = process.env.VERCEL ? "/tmp/uploads" : "./uploads";
+const UPLOAD_ROOT = path.resolve(process.cwd(), process.env.UPLOAD_DIR ?? DEFAULT_UPLOAD_DIR);
 
 export const ALLOWED_RESUME_TYPES = new Set([
   "application/pdf",

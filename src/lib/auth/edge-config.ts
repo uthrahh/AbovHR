@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import type { UserRole, UserStatus } from "@/generated/prisma/enums";
+import type { UserRole, UserStatus } from "@prisma/client";
 
 /**
  * Edge-safe Auth.js config: no Prisma Client or bcrypt imports, so this can

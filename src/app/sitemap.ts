@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { getSiteUrl } from "@/lib/site-url";
 
-const siteUrl = process.env.APP_URL ?? "http://localhost:3000";
+const siteUrl = getSiteUrl();
 
 const STATIC_ROUTES = [
   "",

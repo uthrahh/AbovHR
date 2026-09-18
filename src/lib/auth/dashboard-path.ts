@@ -1,4 +1,4 @@
-import type { UserRole } from "@/generated/prisma/enums";
+import type { UserRole } from "@prisma/client";
 
 export function dashboardPathForRole(role: UserRole): string {
   switch (role) {

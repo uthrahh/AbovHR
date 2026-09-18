@@ -44,3 +44,6 @@ next-env.d.ts
 
 # local dev file storage (resumes etc.) — never committed, never in production
 /uploads
+
+.vercel
+.env*

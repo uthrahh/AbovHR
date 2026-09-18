@@ -3,6 +3,7 @@ import { Newsreader, IBM_Plex_Sans } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsent } from "@/components/layout/cookie-consent";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -18,7 +19,7 @@ const plexSans = IBM_Plex_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
-const siteUrl = process.env.APP_URL ?? "http://localhost:3000";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
