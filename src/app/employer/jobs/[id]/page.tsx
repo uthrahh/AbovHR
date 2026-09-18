@@ -7,6 +7,7 @@ import { updateJobAction, setJobStatusAction } from "@/lib/actions/employer-jobs
 import { JobForm } from "@/components/employer/job-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { sanitizeSections } from "@/lib/profile/sections";
 
 export const metadata: Metadata = { title: "Edit job" };
 
@@ -80,6 +81,7 @@ export default async function EmployerJobDetailPage({ params }: { params: Promis
             externalApplyUrl: job.externalApplyUrl ?? "",
             applicationDeadline: job.applicationDeadline ? job.applicationDeadline.toISOString().slice(0, 10) : "",
             skills: job.skills.map((s) => s.skill.name).join(", "),
+            requestedSections: sanitizeSections(job.requestedSections),
           }}
         />
       </div>

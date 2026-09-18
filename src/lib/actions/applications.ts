@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { requireUser, ForbiddenError } from "@/lib/auth/rbac";
+import { buildAtsSectionText } from "@/lib/data/candidate";
+import { computeAtsScore } from "@/lib/matching/ats-score";
+import { sanitizeSections } from "@/lib/profile/sections";
 
 export type ApplyState = { ok: boolean; message: string } | undefined;
 
@@ -23,13 +27,25 @@ export async function applyToJobAction(_prevState: ApplyState, formData: FormDat
 
   const profile = await prisma.candidateProfile.findUnique({
     where: { userId: user.id },
-    include: { resumes: { where: { isPrimary: true }, take: 1 } },
+    include: {
+      resumes: { where: { isPrimary: true }, take: 1 },
+      skills: { include: { skill: true } },
+      educations: true,
+      experiences: true,
+      projects: true,
+      certifications: true,
+      languages: true,
+      links: true,
+      volunteering: true,
+      publications: true,
+      awards: true,
+    },
   });
   if (!profile) {
     return { ok: false, message: "Complete your candidate profile before applying." };
   }
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({ where: { id: jobId }, include: { skills: { include: { skill: true } } } });
   if (!job || job.status !== "PUBLISHED") {
     return { ok: false, message: "This job is no longer accepting applications." };
   }
@@ -44,6 +60,23 @@ export async function applyToJobAction(_prevState: ApplyState, formData: FormDat
     return { ok: true, message: "You've already applied to this job." };
   }
 
+  // ATS scoring and data sharing are both scoped to exactly the sections this
+  // employer requested — nothing outside that list is read or stored here.
+  const sharedSections = sanitizeSections(job.requestedSections);
+  const sectionText = buildAtsSectionText(profile, sharedSections);
+  const atsResult = computeAtsScore(
+    {
+      title: job.title,
+      description: job.description,
+      responsibilities: job.responsibilities,
+      requirements: job.requirements,
+      requiredSkillNames: job.skills.map((s) => s.skill.name),
+    },
+    profile.skills.map((s) => s.skill.name),
+    sectionText,
+    sharedSections
+  );
+
   await prisma.application.create({
     data: {
       jobId,
@@ -52,6 +85,9 @@ export async function applyToJobAction(_prevState: ApplyState, formData: FormDat
       resumeUrlSnapshot: profile.resumes[0]?.fileUrl,
       coverNote: typeof coverNote === "string" && coverNote.trim() ? coverNote.slice(0, 2000) : undefined,
       status: "APPLIED",
+      atsScore: atsResult.score,
+      atsBreakdown: atsResult as unknown as Prisma.InputJsonValue,
+      sharedSections,
       statusHistory: { create: { toStatus: "APPLIED", changedByUserId: user.id } },
     },
   });

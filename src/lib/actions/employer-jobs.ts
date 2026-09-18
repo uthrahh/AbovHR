@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEmployerMembershipStrict } from "@/lib/auth/employer";
 import { requireUser } from "@/lib/auth/rbac";
 import { slugify } from "@/lib/utils";
+import { sanitizeSections } from "@/lib/profile/sections";
 
 const jobSchema = z.object({
   title: z.string().trim().min(3).max(150),
@@ -28,6 +29,7 @@ const jobSchema = z.object({
   externalApplyUrl: z.string().trim().url().optional().or(z.literal("")),
   applicationDeadline: z.string().optional(),
   skills: z.string().optional(),
+  requestedSections: z.array(z.string()).default([]),
 });
 
 export type JobFormState = { ok: boolean; message?: string; jobId?: string } | undefined;
@@ -53,6 +55,7 @@ function parseJobForm(formData: FormData) {
     externalApplyUrl: formData.get("externalApplyUrl") || "",
     applicationDeadline: formData.get("applicationDeadline") || undefined,
     skills: formData.get("skills") || undefined,
+    requestedSections: formData.getAll("requestedSections"),
   });
 }
 
@@ -108,6 +111,7 @@ export async function createJobAction(status: "DRAFT" | "PUBLISHED", _prevState:
       applicationMethod: parsed.data.applicationMethod,
       externalApplyUrl: parsed.data.externalApplyUrl || null,
       applicationDeadline: parsed.data.applicationDeadline ? new Date(parsed.data.applicationDeadline) : null,
+      requestedSections: sanitizeSections(parsed.data.requestedSections),
       status,
       publishedAt: status === "PUBLISHED" ? new Date() : null,
     },
@@ -150,6 +154,7 @@ export async function updateJobAction(jobId: string, _prevState: JobFormState, f
       applicationMethod: parsed.data.applicationMethod,
       externalApplyUrl: parsed.data.externalApplyUrl || null,
       applicationDeadline: parsed.data.applicationDeadline ? new Date(parsed.data.applicationDeadline) : null,
+      requestedSections: sanitizeSections(parsed.data.requestedSections),
     },
   });
 

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { TextField, TextAreaField, SelectField } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import type { JobFormState } from "@/lib/actions/employer-jobs";
+import { PROFILE_SECTION_KEYS, PROFILE_SECTION_LABELS, DEFAULT_REQUESTED_SECTIONS } from "@/lib/profile/sections";
 
 type JobDefaults = {
   title: string;
@@ -25,6 +26,7 @@ type JobDefaults = {
   externalApplyUrl: string;
   applicationDeadline: string;
   skills: string;
+  requestedSections: string[];
 };
 
 const EMPTY_DEFAULTS: JobDefaults = {
@@ -47,6 +49,7 @@ const EMPTY_DEFAULTS: JobDefaults = {
   externalApplyUrl: "",
   applicationDeadline: "",
   skills: "",
+  requestedSections: DEFAULT_REQUESTED_SECTIONS,
 };
 
 export function JobForm({
@@ -144,6 +147,30 @@ export function JobForm({
       )}
 
       <TextField label="Application deadline" name="applicationDeadline" type="date" defaultValue={defaults.applicationDeadline} optional />
+
+      <fieldset>
+        <legend className="text-sm font-medium text-[var(--color-text-primary)]">
+          What should applicants share for this job?
+        </legend>
+        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+          Only these profile sections are shown to you and used for each applicant&apos;s ATS score — nothing else is
+          shared.
+        </p>
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {PROFILE_SECTION_KEYS.map((key) => (
+            <label key={key} className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              <input
+                type="checkbox"
+                name="requestedSections"
+                value={key}
+                defaultChecked={defaults.requestedSections.includes(key)}
+                className="h-4 w-4 accent-[var(--color-accent-text)]"
+              />
+              {PROFILE_SECTION_LABELS[key]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
     </>
   );
 

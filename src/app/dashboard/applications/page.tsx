@@ -47,7 +47,12 @@ export default async function ApplicationsPage() {
                   <p className="text-sm text-[var(--color-text-secondary)]">{app.job.company.name}</p>
                   <p className="mt-1 text-xs text-[var(--color-text-muted)]">Applied {formatRelativeDate(app.appliedAt)}</p>
                 </div>
-                <ApplicationStatusBadge status={app.status} />
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <ApplicationStatusBadge status={app.status} />
+                  {app.atsScore !== null && (
+                    <span className="text-xs text-[var(--color-text-muted)]">ATS score: {app.atsScore}%</span>
+                  )}
+                </div>
               </div>
             </li>
           ))}

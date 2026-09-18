@@ -852,6 +852,8 @@ async function main() {
     {
       email: "arjun.rao@abov.demo",
       name: "Arjun Rao",
+      firstName: "Arjun",
+      lastName: "Rao",
       headline: "Aspiring Data Analyst",
       city: "Bengaluru",
       experienceYears: 0.5,
@@ -860,14 +862,25 @@ async function main() {
         { name: "SQL", proficiency: "BEGINNER" as const },
         { name: "Statistics", proficiency: "BEGINNER" as const },
       ],
-      education: { institutionName: "University of Mysore", degree: "B.Com", fieldOfStudy: "Commerce", startYear: 2021, endYear: 2024 },
+      education: {
+        level: "UNDERGRADUATE" as const,
+        institutionName: "University of Mysore",
+        degree: "B.Com",
+        fieldOfStudy: "Commerce",
+        startYear: 2021,
+        endYear: 2024,
+      },
     },
     {
       email: "sneha.iyer@abov.demo",
       name: "Sneha Iyer",
+      firstName: "Sneha",
+      lastName: "Iyer",
       headline: "Frontend Engineer, 3 yrs experience",
       city: "Pune",
       experienceYears: 3,
+      githubUrl: "https://github.com/sneha-iyer",
+      linkedinUrl: "https://linkedin.com/in/sneha-iyer",
       skills: [
         { name: "React", proficiency: "ADVANCED" as const },
         { name: "TypeScript", proficiency: "ADVANCED" as const },
@@ -875,11 +888,20 @@ async function main() {
         { name: "CSS", proficiency: "ADVANCED" as const },
         { name: "Git", proficiency: "ADVANCED" as const },
       ],
-      education: { institutionName: "Pune Institute of Technology", degree: "B.E.", fieldOfStudy: "Computer Engineering", startYear: 2018, endYear: 2022 },
+      education: {
+        level: "UNDERGRADUATE" as const,
+        institutionName: "Pune Institute of Technology",
+        degree: "B.E.",
+        fieldOfStudy: "Computer Engineering",
+        startYear: 2018,
+        endYear: 2022,
+      },
     },
     {
       email: "vikram.das@abov.demo",
       name: "Vikram Das",
+      firstName: "Vikram",
+      lastName: "Das",
       headline: "Marketing graduate exploring digital marketing roles",
       city: "Mumbai",
       experienceYears: 0,
@@ -888,14 +910,25 @@ async function main() {
         { name: "SEO", proficiency: "BEGINNER" as const },
         { name: "Communication", proficiency: "ADVANCED" as const },
       ],
-      education: { institutionName: "Mumbai University", degree: "BMS", fieldOfStudy: "Marketing", startYear: 2021, endYear: 2024 },
+      education: {
+        level: "UNDERGRADUATE" as const,
+        institutionName: "Mumbai University",
+        degree: "BMS",
+        fieldOfStudy: "Marketing",
+        startYear: 2021,
+        endYear: 2024,
+      },
     },
     {
       email: "ananya.gupta@abov.demo",
       name: "Ananya Gupta",
+      firstName: "Ananya",
+      lastName: "Gupta",
       headline: "Backend Engineer, Node.js & SQL",
       city: "Pune",
       experienceYears: 4,
+      githubUrl: "https://github.com/ananya-gupta",
+      linkedinUrl: "https://linkedin.com/in/ananya-gupta",
       skills: [
         { name: "Node.js", proficiency: "ADVANCED" as const },
         { name: "SQL", proficiency: "ADVANCED" as const },
@@ -903,11 +936,20 @@ async function main() {
         { name: "Docker", proficiency: "INTERMEDIATE" as const },
         { name: "AWS", proficiency: "INTERMEDIATE" as const },
       ],
-      education: { institutionName: "VIT Pune", degree: "B.Tech", fieldOfStudy: "Information Technology", startYear: 2017, endYear: 2021 },
+      education: {
+        level: "UNDERGRADUATE" as const,
+        institutionName: "VIT Pune",
+        degree: "B.Tech",
+        fieldOfStudy: "Information Technology",
+        startYear: 2017,
+        endYear: 2021,
+      },
     },
     {
       email: "rahul.singh@abov.demo",
       name: "Rahul Singh",
+      firstName: "Rahul",
+      lastName: "Singh",
       headline: "Finance graduate, open to analyst roles",
       city: "Chennai",
       experienceYears: 1,
@@ -916,7 +958,14 @@ async function main() {
         { name: "Excel", proficiency: "ADVANCED" as const },
         { name: "Accounting", proficiency: "INTERMEDIATE" as const },
       ],
-      education: { institutionName: "Loyola College Chennai", degree: "B.Com", fieldOfStudy: "Finance", startYear: 2020, endYear: 2023 },
+      education: {
+        level: "UNDERGRADUATE" as const,
+        institutionName: "Loyola College Chennai",
+        degree: "B.Com",
+        fieldOfStudy: "Finance",
+        startYear: 2020,
+        endYear: 2023,
+      },
     },
   ];
 
@@ -940,7 +989,11 @@ async function main() {
       update: {},
       create: {
         userId: user.id,
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
         headline: candidate.headline,
+        githubUrl: "githubUrl" in candidate ? candidate.githubUrl : undefined,
+        linkedinUrl: "linkedinUrl" in candidate ? candidate.linkedinUrl : undefined,
         locationCity: candidate.city,
         locationCountry: "India",
         experienceYears: candidate.experienceYears,
@@ -974,6 +1027,41 @@ async function main() {
   const frontendJob = await prisma.job.findUnique({ where: { slug: "verdant-systems-frontend-engineer" } });
   const arjunProfileId = candidateProfileIds.get("arjun.rao@abov.demo");
   const snehaProfileId = candidateProfileIds.get("sneha.iyer@abov.demo");
+
+  if (snehaProfileId) {
+    const existingLink = await prisma.candidateLink.findFirst({ where: { candidateProfileId: snehaProfileId, label: "Portfolio site" } });
+    if (!existingLink) {
+      await prisma.candidateLink.create({
+        data: { candidateProfileId: snehaProfileId, label: "Portfolio site", url: "https://sneha-iyer.dev" },
+      });
+    }
+    const existingVolunteering = await prisma.volunteeringExperience.findFirst({ where: { candidateProfileId: snehaProfileId } });
+    if (!existingVolunteering) {
+      await prisma.volunteeringExperience.create({
+        data: {
+          candidateProfileId: snehaProfileId,
+          organization: "Code for Pune",
+          role: "Volunteer frontend mentor",
+          cause: "Education",
+          startDate: new Date("2023-06-01"),
+          isCurrent: true,
+          description: "Mentors first-time contributors on React-based civic-tech projects on weekends.",
+        },
+      });
+    }
+    const existingAward = await prisma.award.findFirst({ where: { candidateProfileId: snehaProfileId } });
+    if (!existingAward) {
+      await prisma.award.create({
+        data: {
+          candidateProfileId: snehaProfileId,
+          title: "Best UI Award — Pune Hackathon 2023",
+          issuer: "Pune Developer Circle",
+          awardDate: new Date("2023-09-15"),
+          description: "Awarded for the most polished, accessible submission at a 24-hour civic-tech hackathon.",
+        },
+      });
+    }
+  }
 
   if (dataAnalystJob && arjunProfileId) {
     await prisma.application.upsert({

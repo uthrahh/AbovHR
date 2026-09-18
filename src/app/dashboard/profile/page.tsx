@@ -8,6 +8,10 @@ import { SkillsSection } from "@/components/profile/skills-section";
 import { ProjectsSection } from "@/components/profile/projects-section";
 import { CertificationsSection } from "@/components/profile/certifications-section";
 import { LanguagesSection } from "@/components/profile/languages-section";
+import { LinksSection } from "@/components/profile/links-section";
+import { VolunteeringSection } from "@/components/profile/volunteering-section";
+import { PublicationsSection } from "@/components/profile/publications-section";
+import { AwardsSection } from "@/components/profile/awards-section";
 import { ResumeSection } from "@/components/profile/resume-section";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { computeProfileCompleteness } from "@/lib/profile/completeness";
@@ -17,18 +21,25 @@ export const metadata: Metadata = { title: "Your profile" };
 export default async function ProfilePage() {
   const session = await requireRoleOrRedirect(["CANDIDATE"]);
 
-  const profile = await prisma.candidateProfile.findUnique({
-    where: { userId: session.user.id },
-    include: {
-      educations: { orderBy: { startYear: "desc" } },
-      experiences: { orderBy: { startDate: "desc" } },
-      skills: { include: { skill: true }, orderBy: { skill: { name: "asc" } } },
-      projects: { orderBy: { createdAt: "desc" } },
-      certifications: { orderBy: { createdAt: "desc" } },
-      languages: { orderBy: { name: "asc" } },
-      resumes: { orderBy: { uploadedAt: "desc" } },
-    },
-  });
+  const [profile, skillCatalog] = await Promise.all([
+    prisma.candidateProfile.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        educations: { orderBy: { startYear: "desc" } },
+        experiences: { orderBy: { startDate: "desc" } },
+        skills: { include: { skill: true }, orderBy: { skill: { name: "asc" } } },
+        projects: { orderBy: { createdAt: "desc" } },
+        certifications: { orderBy: { createdAt: "desc" } },
+        languages: { orderBy: { name: "asc" } },
+        links: { orderBy: { createdAt: "desc" } },
+        volunteering: { orderBy: { startDate: "desc" } },
+        publications: { orderBy: { createdAt: "desc" } },
+        awards: { orderBy: { createdAt: "desc" } },
+        resumes: { orderBy: { uploadedAt: "desc" } },
+      },
+    }),
+    prisma.skill.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!profile) {
     return (
@@ -54,7 +65,8 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-display text-2xl text-[var(--color-text-primary)] sm:text-3xl">Your profile</h1>
       <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-        A complete profile improves your job match scores and helps employers understand your background.
+        This structured profile is what employers and the ATS check compare against — no resume file upload required to
+        apply.
       </p>
 
       <div className="mt-5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
@@ -70,8 +82,13 @@ export default async function ProfilePage() {
       <ProfileSection title="Basic information">
         <BasicInfoForm
           defaults={{
+            firstName: profile.firstName ?? "",
+            lastName: profile.lastName ?? "",
             headline: profile.headline ?? "",
             summary: profile.summary ?? "",
+            githubUrl: profile.githubUrl ?? "",
+            linkedinUrl: profile.linkedinUrl ?? "",
+            portfolioUrl: profile.portfolioUrl ?? "",
             locationCity: profile.locationCity ?? "",
             locationState: profile.locationState ?? "",
             experienceYears: profile.experienceYears?.toString() ?? "",
@@ -85,16 +102,23 @@ export default async function ProfilePage() {
         />
       </ProfileSection>
 
-      <ProfileSection title="Education">
+      <ProfileSection title="Other links" description="GitHub and LinkedIn are set above — add anything else here (portfolio pieces, LeetCode, Behance, etc.).">
+        <LinksSection items={profile.links} />
+      </ProfileSection>
+
+      <ProfileSection title="Education" description="Add every level a job might ask about — 10th, 12th, undergraduate, postgraduate, diplomas, or certificate programs.">
         <EducationSection items={profile.educations} />
       </ProfileSection>
 
-      <ProfileSection title="Work experience">
-        <ExperienceSection items={profile.experiences} />
+      <ProfileSection title="Skills">
+        <SkillsSection
+          items={profile.skills.map((s) => ({ skillId: s.skillId, name: s.skill.name, proficiency: s.proficiency }))}
+          catalog={skillCatalog.map((s) => ({ value: s.id, label: s.name }))}
+        />
       </ProfileSection>
 
-      <ProfileSection title="Skills">
-        <SkillsSection items={profile.skills.map((s) => ({ skillId: s.skillId, name: s.skill.name, proficiency: s.proficiency }))} />
+      <ProfileSection title="Work experience & internships" description="Use the type field to mark internships separately from full-time roles.">
+        <ExperienceSection items={profile.experiences} />
       </ProfileSection>
 
       <ProfileSection title="Projects">
@@ -105,21 +129,34 @@ export default async function ProfilePage() {
         <CertificationsSection items={profile.certifications} />
       </ProfileSection>
 
+      <ProfileSection title="Volunteering">
+        <VolunteeringSection items={profile.volunteering} />
+      </ProfileSection>
+
+      <ProfileSection title="Research papers & publications">
+        <PublicationsSection items={profile.publications} />
+      </ProfileSection>
+
+      <ProfileSection title="Awards & achievements">
+        <AwardsSection items={profile.awards} />
+      </ProfileSection>
+
       <ProfileSection title="Languages">
         <LanguagesSection items={profile.languages} />
       </ProfileSection>
 
-      <ProfileSection title="Resume">
+      <ProfileSection title="Resume file (optional)" description="Only needed if an employer specifically asks for an attached file — Easy Apply uses your structured profile above, not this file.">
         <ResumeSection items={profile.resumes} />
       </ProfileSection>
     </div>
   );
 }
 
-function ProfileSection({ title, children }: { title: string; children: React.ReactNode }) {
+function ProfileSection({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
     <section className="mt-8 border-t border-[var(--color-border)] pt-8">
       <h2 className="font-display text-lg text-[var(--color-text-primary)]">{title}</h2>
+      {description && <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{description}</p>}
       <div className="mt-4">{children}</div>
     </section>
   );

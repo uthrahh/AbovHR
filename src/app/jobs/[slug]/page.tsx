@@ -9,6 +9,7 @@ import { computeJobMatch } from "@/lib/matching/job-match";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
 import { ApplyPanel } from "@/components/jobs/apply-panel";
+import { AtsCheckPanel } from "@/components/jobs/ats-check-panel";
 import { SaveJobButton } from "@/components/jobs/save-job-button";
 import { JobCard, type JobCardData } from "@/components/jobs/job-card";
 import { MapPinIcon, BuildingIcon, ExternalLinkIcon, TargetIcon } from "@/components/ui/icons";
@@ -254,6 +255,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
                 Applications close {job.applicationDeadline.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             )}
+          </div>
+
+          <div className="mt-4">
+            <AtsCheckPanel jobId={job.id} isAuthenticated={!!session?.user} isCandidate={session?.user?.role === "CANDIDATE"} />
           </div>
 
           {job.company.about && (

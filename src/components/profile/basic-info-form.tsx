@@ -21,8 +21,13 @@ const EMPLOYMENT_TYPES = [
 ];
 
 type Defaults = {
+  firstName: string;
+  lastName: string;
   headline: string;
   summary: string;
+  githubUrl: string;
+  linkedinUrl: string;
+  portfolioUrl: string;
   locationCity: string;
   locationState: string;
   experienceYears: string;
@@ -52,8 +57,19 @@ export function BasicInfoForm({ defaults }: { defaults: Defaults }) {
         </p>
       )}
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TextField label="First name" name="firstName" defaultValue={defaults.firstName} />
+        <TextField label="Last name" name="lastName" defaultValue={defaults.lastName} optional />
+      </div>
+
       <TextField label="Headline" name="headline" defaultValue={defaults.headline} placeholder="e.g. Aspiring Data Analyst" />
       <TextAreaField label="Professional summary" name="summary" defaultValue={defaults.summary} rows={4} />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <TextField label="GitHub" name="githubUrl" type="url" defaultValue={defaults.githubUrl} placeholder="https://github.com/…" optional />
+        <TextField label="LinkedIn" name="linkedinUrl" type="url" defaultValue={defaults.linkedinUrl} placeholder="https://linkedin.com/in/…" optional />
+        <TextField label="Portfolio" name="portfolioUrl" type="url" defaultValue={defaults.portfolioUrl} placeholder="https://…" optional />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField label="City" name="locationCity" defaultValue={defaults.locationCity} />

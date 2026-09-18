@@ -2,7 +2,8 @@
 
 import { useActionState, useRef } from "react";
 import { addSkillAction, removeSkillAction } from "@/lib/actions/profile";
-import { TextField, SelectField } from "@/components/ui/field";
+import { SelectField } from "@/components/ui/field";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
 import { CloseIcon } from "@/components/ui/icons";
 
@@ -15,7 +16,7 @@ const PROFICIENCY_LABEL: Record<string, string> = {
   EXPERT: "Expert",
 };
 
-export function SkillsSection({ items }: { items: SkillItem[] }) {
+export function SkillsSection({ items, catalog }: { items: SkillItem[]; catalog: ComboboxOption[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, isPending] = useActionState(async (prev: unknown, formData: FormData) => {
     const result = await addSkillAction(prev as never, formData);
@@ -45,7 +46,9 @@ export function SkillsSection({ items }: { items: SkillItem[] }) {
 
       <form ref={formRef} action={formAction} className="flex flex-wrap items-end gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-sunken)] p-4">
         {state?.message && <p className="w-full text-sm font-medium text-[var(--color-error)]">{state.message}</p>}
-        <TextField label="Skill" name="skillName" placeholder="e.g. SQL" required />
+        <div className="w-56">
+          <Combobox key={items.length} name="skillName" label="Skill" options={catalog} placeholder="Start typing, e.g. SQL" required />
+        </div>
         <SelectField label="Proficiency" name="proficiency" defaultValue="INTERMEDIATE">
           <option value="BEGINNER">Beginner</option>
           <option value="INTERMEDIATE">Intermediate</option>

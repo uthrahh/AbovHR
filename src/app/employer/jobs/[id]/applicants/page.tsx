@@ -8,8 +8,9 @@ import { addApplicationNoteAction } from "@/lib/actions/employer-applications";
 import { StatusSelect } from "@/components/employer/status-select";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UserIcon } from "@/components/ui/icons";
+import { UserIcon, TargetIcon } from "@/components/ui/icons";
 import { cn, formatRelativeDate } from "@/lib/utils";
+import { PROFILE_SECTION_LABELS, sanitizeSections, type ProfileSectionKey } from "@/lib/profile/sections";
 
 export const metadata: Metadata = { title: "Applicants" };
 
@@ -47,7 +48,12 @@ export default async function ApplicantsPage({
     orderBy: { appliedAt: "desc" },
     include: {
       candidateProfile: {
-        include: { user: true, skills: { include: { skill: true } }, educations: { take: 1 }, resumes: { where: { isPrimary: true }, take: 1 } },
+        include: {
+          user: true,
+          skills: { include: { skill: true } },
+          educations: { orderBy: { startYear: "desc" } },
+          resumes: { where: { isPrimary: true }, take: 1 },
+        },
       },
       notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
     },
@@ -116,6 +122,9 @@ export default async function ApplicantsPage({
               }
             );
 
+            const sharedSections = sanitizeSections(app.sharedSections);
+            const shares = (key: ProfileSectionKey) => sharedSections.includes(key);
+
             return (
               <li key={app.id} className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -129,11 +138,24 @@ export default async function ApplicantsPage({
                       <div className="text-base font-semibold text-[var(--color-accent-text)]">{match.percentage}%</div>
                       <div className="text-[0.6875rem] text-[var(--color-text-muted)]">match</div>
                     </div>
+                    {app.atsScore !== null && (
+                      <div className="text-right" title="ATS keyword score computed at the time this candidate applied">
+                        <div className="flex items-center gap-1 text-base font-semibold text-[var(--color-text-primary)]">
+                          <TargetIcon width={14} height={14} className="text-[var(--color-text-muted)]" />
+                          {app.atsScore}%
+                        </div>
+                        <div className="text-[0.6875rem] text-[var(--color-text-muted)]">ATS</div>
+                      </div>
+                    )}
                     <StatusSelect applicationId={app.id} currentStatus={app.status} />
                   </div>
                 </div>
 
-                {candidateSkillNames.length > 0 && (
+                <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                  Shared for this application: {sharedSections.map((s) => PROFILE_SECTION_LABELS[s]).join(", ")}
+                </p>
+
+                {shares("SKILLS") && candidateSkillNames.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {candidateSkillNames.slice(0, 6).map((skill) => (
                       <Badge key={skill} tone={requiredSkillNames.includes(skill) ? "accent" : "neutral"}>
@@ -143,13 +165,21 @@ export default async function ApplicantsPage({
                   </div>
                 )}
 
+                {shares("EDUCATION") && app.candidateProfile.educations[0] && (
+                  <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                    {app.candidateProfile.educations[0].degree}
+                    {app.candidateProfile.educations[0].fieldOfStudy ? `, ${app.candidateProfile.educations[0].fieldOfStudy}` : ""} —{" "}
+                    {app.candidateProfile.educations[0].institutionName}
+                  </p>
+                )}
+
                 <div className="mt-3 flex items-center gap-4">
                   {app.candidateProfile.resumes[0] ? (
                     <a href={`/api/resumes/${app.candidateProfile.resumes[0].id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[var(--color-accent-text)] underline">
-                      View resume
+                      View resume file
                     </a>
                   ) : (
-                    <span className="text-sm text-[var(--color-text-muted)]">No resume on file</span>
+                    <span className="text-sm text-[var(--color-text-muted)]">No resume file attached</span>
                   )}
                 </div>
 

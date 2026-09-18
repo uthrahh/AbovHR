@@ -13,19 +13,33 @@ async function requireCandidateProfile() {
   return { user, profile };
 }
 
-const basicInfoSchema = z.object({
-  headline: z.string().trim().max(120).optional(),
-  summary: z.string().trim().max(1000).optional(),
-  locationCity: z.string().trim().max(80).optional(),
-  locationState: z.string().trim().max(80).optional(),
-  experienceYears: z.coerce.number().min(0).max(50).optional(),
-  availability: z.enum(["IMMEDIATELY", "WITHIN_2_WEEKS", "WITHIN_A_MONTH", "NOT_LOOKING"]),
-  salaryExpectationMin: z.coerce.number().min(0).optional(),
-  salaryExpectationMax: z.coerce.number().min(0).optional(),
-  preferredRoles: z.string().trim().max(300).optional(),
-  preferredWorkModes: z.array(z.enum(["REMOTE", "HYBRID", "OFFICE", "FIELD"])).default([]),
-  preferredEmploymentTypes: z.array(z.enum(["FULL_TIME", "PART_TIME", "INTERNSHIP", "APPRENTICESHIP", "CONTRACT"])).default([]),
-});
+const NAME_PATTERN = /^[\p{L}][\p{L}'.\- ]{0,79}$/u;
+const nameField = z.string().trim().regex(NAME_PATTERN, "Use letters only (hyphens and apostrophes are fine).").optional().or(z.literal(""));
+const urlField = z.string().trim().max(300).url("Enter a full URL, e.g. https://…").optional().or(z.literal(""));
+
+const basicInfoSchema = z
+  .object({
+    firstName: nameField,
+    lastName: nameField,
+    headline: z.string().trim().max(120).optional(),
+    summary: z.string().trim().max(1000).optional(),
+    githubUrl: urlField,
+    linkedinUrl: urlField,
+    portfolioUrl: urlField,
+    locationCity: z.string().trim().max(80).optional(),
+    locationState: z.string().trim().max(80).optional(),
+    experienceYears: z.coerce.number().min(0).max(50).optional(),
+    availability: z.enum(["IMMEDIATELY", "WITHIN_2_WEEKS", "WITHIN_A_MONTH", "NOT_LOOKING"]),
+    salaryExpectationMin: z.coerce.number().min(0).optional(),
+    salaryExpectationMax: z.coerce.number().min(0).optional(),
+    preferredRoles: z.string().trim().max(300).optional(),
+    preferredWorkModes: z.array(z.enum(["REMOTE", "HYBRID", "OFFICE", "FIELD"])).default([]),
+    preferredEmploymentTypes: z.array(z.enum(["FULL_TIME", "PART_TIME", "INTERNSHIP", "APPRENTICESHIP", "CONTRACT"])).default([]),
+  })
+  .refine((d) => !d.salaryExpectationMin || !d.salaryExpectationMax || d.salaryExpectationMax >= d.salaryExpectationMin, {
+    message: "Maximum salary expectation can't be below the minimum.",
+    path: ["salaryExpectationMax"],
+  });
 
 export type ActionState = { ok: boolean; message?: string } | undefined;
 
@@ -33,8 +47,13 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
   const { profile } = await requireCandidateProfile();
 
   const parsed = basicInfoSchema.safeParse({
+    firstName: formData.get("firstName") || undefined,
+    lastName: formData.get("lastName") || undefined,
     headline: formData.get("headline") || undefined,
     summary: formData.get("summary") || undefined,
+    githubUrl: formData.get("githubUrl") || undefined,
+    linkedinUrl: formData.get("linkedinUrl") || undefined,
+    portfolioUrl: formData.get("portfolioUrl") || undefined,
     locationCity: formData.get("locationCity") || undefined,
     locationState: formData.get("locationState") || undefined,
     experienceYears: formData.get("experienceYears") || undefined,
@@ -46,13 +65,18 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
     preferredEmploymentTypes: formData.getAll("preferredEmploymentTypes"),
   });
 
-  if (!parsed.success) return { ok: false, message: "Please check the highlighted fields." };
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Please check the highlighted fields." };
 
   await prisma.candidateProfile.update({
     where: { id: profile.id },
     data: {
+      firstName: parsed.data.firstName || null,
+      lastName: parsed.data.lastName || null,
       headline: parsed.data.headline,
       summary: parsed.data.summary,
+      githubUrl: parsed.data.githubUrl || null,
+      linkedinUrl: parsed.data.linkedinUrl || null,
+      portfolioUrl: parsed.data.portfolioUrl || null,
       locationCity: parsed.data.locationCity,
       locationState: parsed.data.locationState,
       experienceYears: parsed.data.experienceYears,
@@ -72,24 +96,36 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
   return { ok: true, message: "Profile updated." };
 }
 
-const educationSchema = z.object({
-  institutionName: z.string().trim().min(2).max(150),
-  degree: z.string().trim().min(2).max(120),
-  fieldOfStudy: z.string().trim().max(120).optional(),
-  startYear: z.coerce.number().min(1970).max(2100).optional(),
-  endYear: z.coerce.number().min(1970).max(2100).optional(),
-});
+const CURRENT_YEAR = new Date().getFullYear();
+const EDUCATION_LEVELS = ["SECONDARY", "HIGHER_SECONDARY", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE", "DOCTORATE", "CERTIFICATE_PROGRAM", "OTHER"] as const;
+
+const educationSchema = z
+  .object({
+    level: z.enum(EDUCATION_LEVELS),
+    institutionName: z.string().trim().min(2, "Enter an institution name.").max(150),
+    degree: z.string().trim().min(2, "Enter a degree or qualification.").max(120),
+    fieldOfStudy: z.string().trim().max(120).optional(),
+    startYear: z.coerce.number().int().min(1970).max(CURRENT_YEAR + 1).optional(),
+    endYear: z.coerce.number().int().min(1970).max(CURRENT_YEAR + 10).optional(),
+    gradeValue: z.string().trim().max(30).optional(),
+  })
+  .refine((data) => !data.startYear || !data.endYear || data.endYear >= data.startYear, {
+    message: "End year can't be before start year.",
+    path: ["endYear"],
+  });
 
 export async function addEducationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireCandidateProfile();
   const parsed = educationSchema.safeParse({
+    level: formData.get("level") || "UNDERGRADUATE",
     institutionName: formData.get("institutionName"),
     degree: formData.get("degree"),
     fieldOfStudy: formData.get("fieldOfStudy") || undefined,
     startYear: formData.get("startYear") || undefined,
     endYear: formData.get("endYear") || undefined,
+    gradeValue: formData.get("gradeValue") || undefined,
   });
-  if (!parsed.success) return { ok: false, message: "Enter an institution and degree." };
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the highlighted fields." };
 
   await prisma.education.create({ data: { candidateProfileId: profile.id, ...parsed.data } });
   revalidatePath("/dashboard/profile");
@@ -102,10 +138,13 @@ export async function deleteEducationAction(educationId: string) {
   revalidatePath("/dashboard/profile");
 }
 
+const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "INTERNSHIP", "APPRENTICESHIP", "CONTRACT"] as const;
+
 const experienceSchema = z.object({
-  company: z.string().trim().min(2).max(150),
-  title: z.string().trim().min(2).max(150),
-  startDate: z.coerce.date(),
+  employmentType: z.enum(EMPLOYMENT_TYPES),
+  company: z.string().trim().min(2, "Enter a company or organization name.").max(150),
+  title: z.string().trim().min(2, "Enter a job title.").max(150),
+  startDate: z.coerce.date({ error: "Enter a valid start date." }),
   endDate: z.string().optional(),
   isCurrent: z.boolean().default(false),
   description: z.string().trim().max(1000).optional(),
@@ -115,22 +154,32 @@ export async function addExperienceAction(_prevState: ActionState, formData: For
   const { profile } = await requireCandidateProfile();
   const isCurrent = formData.get("isCurrent") === "on";
   const parsed = experienceSchema.safeParse({
+    employmentType: formData.get("employmentType") || "FULL_TIME",
     company: formData.get("company"),
     title: formData.get("title"),
     startDate: formData.get("startDate"),
     isCurrent,
     description: formData.get("description") || undefined,
   });
-  if (!parsed.success) return { ok: false, message: "Enter a company, title, and start date." };
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the highlighted fields." };
 
   const endDateRaw = formData.get("endDate");
+  const endDate = !isCurrent && typeof endDateRaw === "string" && endDateRaw ? new Date(endDateRaw) : null;
+  if (endDate && endDate < parsed.data.startDate) {
+    return { ok: false, message: "End date can't be before the start date." };
+  }
+  if (parsed.data.startDate > new Date()) {
+    return { ok: false, message: "Start date can't be in the future." };
+  }
+
   await prisma.experience.create({
     data: {
       candidateProfileId: profile.id,
+      employmentType: parsed.data.employmentType,
       company: parsed.data.company,
       title: parsed.data.title,
       startDate: parsed.data.startDate,
-      endDate: !isCurrent && typeof endDateRaw === "string" && endDateRaw ? new Date(endDateRaw) : null,
+      endDate,
       isCurrent,
       description: parsed.data.description,
     },
@@ -288,5 +337,153 @@ export async function addLanguageAction(_prevState: ActionState, formData: FormD
 export async function deleteLanguageAction(languageId: string) {
   const { profile } = await requireCandidateProfile();
   await prisma.candidateLanguage.deleteMany({ where: { id: languageId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const linkSchema = z.object({
+  label: z.string().trim().min(2, "Give this link a short label.").max(60),
+  url: z.string().trim().max(300).url("Enter a full URL, e.g. https://…"),
+});
+
+export async function addLinkAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = linkSchema.safeParse({ label: formData.get("label"), url: formData.get("url") });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Enter a label and a valid URL." };
+
+  const existingCount = await prisma.candidateLink.count({ where: { candidateProfileId: profile.id } });
+  if (existingCount >= 10) return { ok: false, message: "You can add up to 10 additional links." };
+
+  await prisma.candidateLink.create({ data: { candidateProfileId: profile.id, ...parsed.data } });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteLinkAction(linkId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.candidateLink.deleteMany({ where: { id: linkId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const volunteeringSchema = z.object({
+  organization: z.string().trim().min(2, "Enter an organization name.").max(150),
+  role: z.string().trim().min(2, "Enter your role.").max(150),
+  cause: z.string().trim().max(120).optional(),
+  startDate: z.coerce.date({ error: "Enter a valid start date." }),
+  isCurrent: z.boolean().default(false),
+  description: z.string().trim().max(1000).optional(),
+});
+
+export async function addVolunteeringAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const isCurrent = formData.get("isCurrent") === "on";
+  const parsed = volunteeringSchema.safeParse({
+    organization: formData.get("organization"),
+    role: formData.get("role"),
+    cause: formData.get("cause") || undefined,
+    startDate: formData.get("startDate"),
+    isCurrent,
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the highlighted fields." };
+
+  const endDateRaw = formData.get("endDate");
+  const endDate = !isCurrent && typeof endDateRaw === "string" && endDateRaw ? new Date(endDateRaw) : null;
+  if (endDate && endDate < parsed.data.startDate) {
+    return { ok: false, message: "End date can't be before the start date." };
+  }
+
+  await prisma.volunteeringExperience.create({
+    data: { candidateProfileId: profile.id, ...parsed.data, endDate },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteVolunteeringAction(volunteeringId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.volunteeringExperience.deleteMany({ where: { id: volunteeringId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const PUBLICATION_TYPES = ["RESEARCH_PAPER", "ARTICLE", "BOOK_CHAPTER", "PATENT", "CONFERENCE_PAPER", "OTHER"] as const;
+
+const publicationSchema = z.object({
+  title: z.string().trim().min(2, "Enter a title.").max(200),
+  publicationType: z.enum(PUBLICATION_TYPES),
+  venue: z.string().trim().max(150).optional(),
+  authors: z.string().trim().max(300).optional(),
+  publishedDate: z.string().optional(),
+  url: z.string().trim().max(300).url("Enter a full URL, e.g. https://…").optional().or(z.literal("")),
+  description: z.string().trim().max(1000).optional(),
+});
+
+export async function addPublicationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = publicationSchema.safeParse({
+    title: formData.get("title"),
+    publicationType: formData.get("publicationType") || "RESEARCH_PAPER",
+    venue: formData.get("venue") || undefined,
+    authors: formData.get("authors") || undefined,
+    publishedDate: formData.get("publishedDate") || undefined,
+    url: formData.get("url") || "",
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the highlighted fields." };
+
+  await prisma.publication.create({
+    data: {
+      candidateProfileId: profile.id,
+      title: parsed.data.title,
+      publicationType: parsed.data.publicationType,
+      venue: parsed.data.venue,
+      authors: parsed.data.authors,
+      publishedDate: parsed.data.publishedDate ? new Date(parsed.data.publishedDate) : undefined,
+      url: parsed.data.url || undefined,
+      description: parsed.data.description,
+    },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deletePublicationAction(publicationId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.publication.deleteMany({ where: { id: publicationId, candidateProfileId: profile.id } });
+  revalidatePath("/dashboard/profile");
+}
+
+const awardSchema = z.object({
+  title: z.string().trim().min(2, "Enter a title.").max(150),
+  issuer: z.string().trim().max(150).optional(),
+  awardDate: z.string().optional(),
+  description: z.string().trim().max(500).optional(),
+});
+
+export async function addAwardAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = awardSchema.safeParse({
+    title: formData.get("title"),
+    issuer: formData.get("issuer") || undefined,
+    awardDate: formData.get("awardDate") || undefined,
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Enter a title." };
+
+  await prisma.award.create({
+    data: {
+      candidateProfileId: profile.id,
+      title: parsed.data.title,
+      issuer: parsed.data.issuer,
+      awardDate: parsed.data.awardDate ? new Date(parsed.data.awardDate) : undefined,
+      description: parsed.data.description,
+    },
+  });
+  revalidatePath("/dashboard/profile");
+  return { ok: true };
+}
+
+export async function deleteAwardAction(awardId: string) {
+  const { profile } = await requireCandidateProfile();
+  await prisma.award.deleteMany({ where: { id: awardId, candidateProfileId: profile.id } });
   revalidatePath("/dashboard/profile");
 }
