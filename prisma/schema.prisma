@@ -114,13 +114,6 @@ enum AvailabilityStatus {
   NOT_LOOKING
 }
 
-enum ProficiencyLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  EXPERT
-}
-
 enum LanguageProficiency {
   BASIC
   CONVERSATIONAL
@@ -194,12 +187,16 @@ model Education {
   institutionName    String
   degree             String
   fieldOfStudy       String?
+  // School board (CBSE/ICSE/State Board/IB/etc.) — applies to SECONDARY and
+  // HIGHER_SECONDARY only; nullable since it's meaningless for UG/PG/etc.
+  board              String?
   startYear          Int?
   endYear            Int?
   gradeValue         String?
   createdAt          DateTime         @default(now())
 
   @@index([candidateProfileId])
+  @@index([candidateProfileId, level])
 }
 
 model Experience {
@@ -359,7 +356,6 @@ model CandidateSkill {
   candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
   skillId            String
   skill              Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  proficiency        ProficiencyLevel @default(BEGINNER)
   yearsOfExperience  Decimal?         @db.Decimal(4, 1)
 
   @@unique([candidateProfileId, skillId])

@@ -15,13 +15,25 @@ import { AwardsSection } from "@/components/profile/awards-section";
 import { ResumeSection } from "@/components/profile/resume-section";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { computeProfileCompleteness } from "@/lib/profile/completeness";
+import { ProfileImportProvider } from "@/components/profile/profile-import-context";
+import { ImportProfileMenu } from "@/components/profile/import-profile-menu";
 
 export const metadata: Metadata = { title: "Your profile" };
+
+/** Pulls just the username back out of a stored full profile URL, for the username-only input. */
+function usernameFromUrl(url: string | null, hosts: string[]): string {
+  if (!url) return "";
+  let value = url.trim();
+  for (const host of hosts) {
+    value = value.replace(new RegExp(`^https?://(www\\.)?${host}/(in/)?`, "i"), "");
+  }
+  return value.replace(/\/+$/, "");
+}
 
 export default async function ProfilePage() {
   const session = await requireRoleOrRedirect(["CANDIDATE"]);
 
-  const [profile, skillCatalog] = await Promise.all([
+  const [profile, skillCatalog, jobTitles, careerPathTitles] = await Promise.all([
     prisma.candidateProfile.findUnique({
       where: { userId: session.user.id },
       include: {
@@ -39,7 +51,13 @@ export default async function ProfilePage() {
       },
     }),
     prisma.skill.findMany({ orderBy: { name: "asc" } }),
+    prisma.job.findMany({ where: { status: "PUBLISHED" }, select: { title: true }, distinct: ["title"] }),
+    prisma.careerPath.findMany({ select: { title: true }, distinct: ["title"] }),
   ]);
+
+  const roleCatalog = Array.from(new Set([...jobTitles, ...careerPathTitles].map((t) => t.title)))
+    .sort((a, b) => a.localeCompare(b))
+    .map((title) => ({ value: title, label: title }));
 
   if (!profile) {
     return (
@@ -79,75 +97,82 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <ProfileSection title="Basic information">
-        <BasicInfoForm
-          defaults={{
-            firstName: profile.firstName ?? "",
-            lastName: profile.lastName ?? "",
-            headline: profile.headline ?? "",
-            summary: profile.summary ?? "",
-            githubUrl: profile.githubUrl ?? "",
-            linkedinUrl: profile.linkedinUrl ?? "",
-            portfolioUrl: profile.portfolioUrl ?? "",
-            locationCity: profile.locationCity ?? "",
-            locationState: profile.locationState ?? "",
-            experienceYears: profile.experienceYears?.toString() ?? "",
-            availability: profile.availability,
-            salaryExpectationMin: profile.salaryExpectationMin?.toString() ?? "",
-            salaryExpectationMax: profile.salaryExpectationMax?.toString() ?? "",
-            preferredRoles: profile.preferredRoles.join(", "),
-            preferredWorkModes: profile.preferredWorkModes,
-            preferredEmploymentTypes: profile.preferredEmploymentTypes,
-          }}
-        />
-      </ProfileSection>
+      <ProfileImportProvider>
+        <div className="mt-8">
+          <ImportProfileMenu />
+        </div>
 
-      <ProfileSection title="Other links" description="GitHub and LinkedIn are set above — add anything else here (portfolio pieces, LeetCode, Behance, etc.).">
-        <LinksSection items={profile.links} />
-      </ProfileSection>
+        <ProfileSection title="Basic information">
+          <BasicInfoForm
+            defaults={{
+              firstName: profile.firstName ?? "",
+              lastName: profile.lastName ?? "",
+              headline: profile.headline ?? "",
+              summary: profile.summary ?? "",
+              githubUsername: usernameFromUrl(profile.githubUrl, ["github\\.com"]),
+              linkedinUsername: usernameFromUrl(profile.linkedinUrl, ["linkedin\\.com"]),
+              portfolioUrl: profile.portfolioUrl ?? "",
+              locationCity: profile.locationCity ?? "",
+              locationState: profile.locationState ?? "",
+              experienceYears: profile.experienceYears?.toString() ?? "",
+              availability: profile.availability,
+              salaryExpectationMin: profile.salaryExpectationMin?.toString() ?? "",
+              salaryExpectationMax: profile.salaryExpectationMax?.toString() ?? "",
+              preferredRoles: profile.preferredRoles,
+              preferredWorkModes: profile.preferredWorkModes,
+              preferredEmploymentTypes: profile.preferredEmploymentTypes,
+            }}
+            roleCatalog={roleCatalog}
+          />
+        </ProfileSection>
 
-      <ProfileSection title="Education" description="Add every level a job might ask about — 10th, 12th, undergraduate, postgraduate, diplomas, or certificate programs.">
-        <EducationSection items={profile.educations} />
-      </ProfileSection>
+        <ProfileSection title="Other links" description="GitHub and LinkedIn are set above — add anything else here (portfolio pieces, LeetCode, Behance, etc.).">
+          <LinksSection items={profile.links} />
+        </ProfileSection>
 
-      <ProfileSection title="Skills">
-        <SkillsSection
-          items={profile.skills.map((s) => ({ skillId: s.skillId, name: s.skill.name, proficiency: s.proficiency }))}
-          catalog={skillCatalog.map((s) => ({ value: s.id, label: s.name }))}
-        />
-      </ProfileSection>
+        <ProfileSection title="Education" description="10th, 12th, and undergraduate are required — add postgraduate, diplomas, or certificate programs below if you have them.">
+          <EducationSection items={profile.educations} />
+        </ProfileSection>
 
-      <ProfileSection title="Work experience & internships" description="Use the type field to mark internships separately from full-time roles.">
-        <ExperienceSection items={profile.experiences} />
-      </ProfileSection>
+        <ProfileSection title="Skills">
+          <SkillsSection
+            items={profile.skills.map((s) => ({ skillId: s.skillId, name: s.skill.name }))}
+            catalog={skillCatalog.map((s) => ({ value: s.name, label: s.name }))}
+          />
+        </ProfileSection>
 
-      <ProfileSection title="Projects">
-        <ProjectsSection items={profile.projects} />
-      </ProfileSection>
+        <ProfileSection title="Work experience & internships" description="Use the type field to mark internships separately from full-time roles.">
+          <ExperienceSection items={profile.experiences} />
+        </ProfileSection>
 
-      <ProfileSection title="Certifications">
-        <CertificationsSection items={profile.certifications} />
-      </ProfileSection>
+        <ProfileSection title="Projects">
+          <ProjectsSection items={profile.projects} />
+        </ProfileSection>
 
-      <ProfileSection title="Volunteering">
-        <VolunteeringSection items={profile.volunteering} />
-      </ProfileSection>
+        <ProfileSection title="Certifications">
+          <CertificationsSection items={profile.certifications} />
+        </ProfileSection>
 
-      <ProfileSection title="Research papers & publications">
-        <PublicationsSection items={profile.publications} />
-      </ProfileSection>
+        <ProfileSection title="Volunteering">
+          <VolunteeringSection items={profile.volunteering} />
+        </ProfileSection>
 
-      <ProfileSection title="Awards & achievements">
-        <AwardsSection items={profile.awards} />
-      </ProfileSection>
+        <ProfileSection title="Research papers & publications">
+          <PublicationsSection items={profile.publications} />
+        </ProfileSection>
 
-      <ProfileSection title="Languages">
-        <LanguagesSection items={profile.languages} />
-      </ProfileSection>
+        <ProfileSection title="Awards & achievements">
+          <AwardsSection items={profile.awards} />
+        </ProfileSection>
 
-      <ProfileSection title="Resume file (optional)" description="Only needed if an employer specifically asks for an attached file — Easy Apply uses your structured profile above, not this file.">
-        <ResumeSection items={profile.resumes} />
-      </ProfileSection>
+        <ProfileSection title="Languages">
+          <LanguagesSection items={profile.languages} />
+        </ProfileSection>
+
+        <ProfileSection title="Resume file (optional)" description="Only needed if an employer specifically asks for an attached file — Easy Apply uses your structured profile above, not this file.">
+          <ResumeSection items={profile.resumes} />
+        </ProfileSection>
+      </ProfileImportProvider>
     </div>
   );
 }

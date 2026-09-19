@@ -858,9 +858,9 @@ async function main() {
       city: "Bengaluru",
       experienceYears: 0.5,
       skills: [
-        { name: "Excel", proficiency: "INTERMEDIATE" as const },
-        { name: "SQL", proficiency: "BEGINNER" as const },
-        { name: "Statistics", proficiency: "BEGINNER" as const },
+        { name: "Excel" },
+        { name: "SQL" },
+        { name: "Statistics" },
       ],
       education: {
         level: "UNDERGRADUATE" as const,
@@ -882,11 +882,11 @@ async function main() {
       githubUrl: "https://github.com/sneha-iyer",
       linkedinUrl: "https://linkedin.com/in/sneha-iyer",
       skills: [
-        { name: "React", proficiency: "ADVANCED" as const },
-        { name: "TypeScript", proficiency: "ADVANCED" as const },
-        { name: "JavaScript", proficiency: "EXPERT" as const },
-        { name: "CSS", proficiency: "ADVANCED" as const },
-        { name: "Git", proficiency: "ADVANCED" as const },
+        { name: "React" },
+        { name: "TypeScript" },
+        { name: "JavaScript" },
+        { name: "CSS" },
+        { name: "Git" },
       ],
       education: {
         level: "UNDERGRADUATE" as const,
@@ -906,9 +906,9 @@ async function main() {
       city: "Mumbai",
       experienceYears: 0,
       skills: [
-        { name: "Content Writing", proficiency: "INTERMEDIATE" as const },
-        { name: "SEO", proficiency: "BEGINNER" as const },
-        { name: "Communication", proficiency: "ADVANCED" as const },
+        { name: "Content Writing" },
+        { name: "SEO" },
+        { name: "Communication" },
       ],
       education: {
         level: "UNDERGRADUATE" as const,
@@ -930,11 +930,11 @@ async function main() {
       githubUrl: "https://github.com/ananya-gupta",
       linkedinUrl: "https://linkedin.com/in/ananya-gupta",
       skills: [
-        { name: "Node.js", proficiency: "ADVANCED" as const },
-        { name: "SQL", proficiency: "ADVANCED" as const },
-        { name: "REST APIs", proficiency: "ADVANCED" as const },
-        { name: "Docker", proficiency: "INTERMEDIATE" as const },
-        { name: "AWS", proficiency: "INTERMEDIATE" as const },
+        { name: "Node.js" },
+        { name: "SQL" },
+        { name: "REST APIs" },
+        { name: "Docker" },
+        { name: "AWS" },
       ],
       education: {
         level: "UNDERGRADUATE" as const,
@@ -954,9 +954,9 @@ async function main() {
       city: "Chennai",
       experienceYears: 1,
       skills: [
-        { name: "Financial Analysis", proficiency: "INTERMEDIATE" as const },
-        { name: "Excel", proficiency: "ADVANCED" as const },
-        { name: "Accounting", proficiency: "INTERMEDIATE" as const },
+        { name: "Financial Analysis" },
+        { name: "Excel" },
+        { name: "Accounting" },
       ],
       education: {
         level: "UNDERGRADUATE" as const,
@@ -1016,8 +1016,8 @@ async function main() {
       if (!skillId) continue;
       await prisma.candidateSkill.upsert({
         where: { candidateProfileId_skillId: { candidateProfileId: profile.id, skillId } },
-        update: { proficiency: skill.proficiency },
-        create: { candidateProfileId: profile.id, skillId, proficiency: skill.proficiency },
+        update: {},
+        create: { candidateProfileId: profile.id, skillId },
       });
     }
   }

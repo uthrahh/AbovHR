@@ -17,14 +17,46 @@ const NAME_PATTERN = /^[\p{L}][\p{L}'.\- ]{0,79}$/u;
 const nameField = z.string().trim().regex(NAME_PATTERN, "Use letters only (hyphens and apostrophes are fine).").optional().or(z.literal(""));
 const urlField = z.string().trim().max(300).url("Enter a full URL, e.g. https://…").optional().or(z.literal(""));
 
+const GITHUB_USERNAME_PATTERN = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+const LINKEDIN_USERNAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]{2,99}$/;
+
+/** Strips a pasted full profile URL down to just the username, if one was pasted. */
+function extractUsername(raw: string, hosts: string[]): string {
+  let value = raw.trim();
+  for (const host of hosts) {
+    // Protocol and "www." are both optional — people paste "linkedin.com/in/x" as often as the full URL.
+    const withHost = new RegExp(`^(https?://)?(www\\.)?${host}/(in/)?`, "i");
+    value = value.replace(withHost, "");
+  }
+  return value.replace(/\/+$/, "").trim();
+}
+
+const githubUsernameField = z
+  .string()
+  .trim()
+  .transform((v) => extractUsername(v, ["github\\.com"]))
+  .refine((v) => v === "" || GITHUB_USERNAME_PATTERN.test(v), "Enter just your GitHub username, e.g. octocat.")
+  .optional()
+  .or(z.literal(""));
+
+const linkedinUsernameField = z
+  .string()
+  .trim()
+  .transform((v) => extractUsername(v, ["linkedin\\.com"]))
+  .refine((v) => v === "" || LINKEDIN_USERNAME_PATTERN.test(v), "Enter just your LinkedIn username, e.g. jane-doe.")
+  .optional()
+  .or(z.literal(""));
+
+const PREFERRED_ROLE_MAX = 10;
+
 const basicInfoSchema = z
   .object({
     firstName: nameField,
     lastName: nameField,
     headline: z.string().trim().max(120).optional(),
     summary: z.string().trim().max(1000).optional(),
-    githubUrl: urlField,
-    linkedinUrl: urlField,
+    githubUsername: githubUsernameField,
+    linkedinUsername: linkedinUsernameField,
     portfolioUrl: urlField,
     locationCity: z.string().trim().max(80).optional(),
     locationState: z.string().trim().max(80).optional(),
@@ -32,7 +64,7 @@ const basicInfoSchema = z
     availability: z.enum(["IMMEDIATELY", "WITHIN_2_WEEKS", "WITHIN_A_MONTH", "NOT_LOOKING"]),
     salaryExpectationMin: z.coerce.number().min(0).optional(),
     salaryExpectationMax: z.coerce.number().min(0).optional(),
-    preferredRoles: z.string().trim().max(300).optional(),
+    preferredRoles: z.array(z.string().trim().min(1).max(80)).max(PREFERRED_ROLE_MAX).default([]),
     preferredWorkModes: z.array(z.enum(["REMOTE", "HYBRID", "OFFICE", "FIELD"])).default([]),
     preferredEmploymentTypes: z.array(z.enum(["FULL_TIME", "PART_TIME", "INTERNSHIP", "APPRENTICESHIP", "CONTRACT"])).default([]),
   })
@@ -42,8 +74,9 @@ const basicInfoSchema = z
   });
 
 export type ActionState = { ok: boolean; message?: string } | undefined;
+export type BasicInfoState = { ok: boolean; message?: string; fieldErrors?: Record<string, string> } | undefined;
 
-export async function updateBasicInfoAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+export async function updateBasicInfoAction(_prevState: BasicInfoState, formData: FormData): Promise<BasicInfoState> {
   const { profile } = await requireCandidateProfile();
 
   const parsed = basicInfoSchema.safeParse({
@@ -51,8 +84,8 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
     lastName: formData.get("lastName") || undefined,
     headline: formData.get("headline") || undefined,
     summary: formData.get("summary") || undefined,
-    githubUrl: formData.get("githubUrl") || undefined,
-    linkedinUrl: formData.get("linkedinUrl") || undefined,
+    githubUsername: formData.get("githubUsername") || "",
+    linkedinUsername: formData.get("linkedinUsername") || "",
     portfolioUrl: formData.get("portfolioUrl") || undefined,
     locationCity: formData.get("locationCity") || undefined,
     locationState: formData.get("locationState") || undefined,
@@ -60,12 +93,19 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
     availability: formData.get("availability") || "NOT_LOOKING",
     salaryExpectationMin: formData.get("salaryExpectationMin") || undefined,
     salaryExpectationMax: formData.get("salaryExpectationMax") || undefined,
-    preferredRoles: formData.get("preferredRoles") || undefined,
+    preferredRoles: formData.getAll("preferredRoles"),
     preferredWorkModes: formData.getAll("preferredWorkModes"),
     preferredEmploymentTypes: formData.getAll("preferredEmploymentTypes"),
   });
 
-  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Please check the highlighted fields." };
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0]?.toString();
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+    }
+    return { ok: false, message: "Please fix the highlighted fields.", fieldErrors };
+  }
 
   await prisma.candidateProfile.update({
     where: { id: profile.id },
@@ -74,8 +114,8 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
       lastName: parsed.data.lastName || null,
       headline: parsed.data.headline,
       summary: parsed.data.summary,
-      githubUrl: parsed.data.githubUrl || null,
-      linkedinUrl: parsed.data.linkedinUrl || null,
+      githubUrl: parsed.data.githubUsername ? `https://github.com/${parsed.data.githubUsername}` : null,
+      linkedinUrl: parsed.data.linkedinUsername ? `https://linkedin.com/in/${parsed.data.linkedinUsername}` : null,
       portfolioUrl: parsed.data.portfolioUrl || null,
       locationCity: parsed.data.locationCity,
       locationState: parsed.data.locationState,
@@ -83,9 +123,7 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
       availability: parsed.data.availability,
       salaryExpectationMin: parsed.data.salaryExpectationMin,
       salaryExpectationMax: parsed.data.salaryExpectationMax,
-      preferredRoles: parsed.data.preferredRoles
-        ? parsed.data.preferredRoles.split(",").map((s) => s.trim()).filter(Boolean)
-        : [],
+      preferredRoles: parsed.data.preferredRoles,
       preferredWorkModes: parsed.data.preferredWorkModes,
       preferredEmploymentTypes: parsed.data.preferredEmploymentTypes,
     },
@@ -96,38 +134,186 @@ export async function updateBasicInfoAction(_prevState: ActionState, formData: F
   return { ok: true, message: "Profile updated." };
 }
 
+const EDUCATION_LEVEL_LABEL: Record<string, string> = {
+  SECONDARY: "10th",
+  HIGHER_SECONDARY: "12th",
+  DIPLOMA: "a diploma",
+  UNDERGRADUATE: "an undergraduate degree",
+  POSTGRADUATE: "a postgraduate degree",
+  DOCTORATE: "a doctorate",
+  CERTIFICATE_PROGRAM: "a certificate program",
+  OTHER: "other education",
+};
+
+function joinWithAnd(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+/**
+ * Builds a professional summary deterministically from the candidate's own
+ * saved profile data — no external AI call, so the result is always
+ * traceable back to fields the candidate entered.
+ */
+export async function generateSummaryAction(): Promise<{ ok: true; summary: string } | { ok: false; message: string }> {
+  const { profile } = await requireCandidateProfile();
+
+  const data = await prisma.candidateProfile.findUnique({
+    where: { id: profile.id },
+    include: {
+      skills: { include: { skill: true }, orderBy: { skill: { name: "asc" } } },
+      educations: true,
+      experiences: { orderBy: { startDate: "desc" } },
+    },
+  });
+  if (!data) return { ok: false, message: "Profile not found." };
+
+  const sentences: string[] = [];
+
+  const roleLabel = data.headline?.trim() || data.preferredRoles[0] || "Motivated professional";
+  const expYears = data.experienceYears ? Number(data.experienceYears) : 0;
+  let opening = roleLabel;
+  if (expYears > 0) {
+    opening += ` with ${expYears} year${expYears === 1 ? "" : "s"} of experience`;
+  } else if (data.experiences.length === 0) {
+    opening += ", early in their career";
+  }
+  sentences.push(`${opening}.`);
+
+  const highestEducation =
+    data.educations.find((e) => e.level === "DOCTORATE") ??
+    data.educations.find((e) => e.level === "POSTGRADUATE") ??
+    data.educations.find((e) => e.level === "UNDERGRADUATE");
+  if (highestEducation) {
+    const levelLabel = EDUCATION_LEVEL_LABEL[highestEducation.level] ?? "a degree";
+    const fieldBit = highestEducation.fieldOfStudy ? ` in ${highestEducation.fieldOfStudy}` : "";
+    const institutionBit = highestEducation.institutionName ? ` from ${highestEducation.institutionName}` : "";
+    sentences.push(`Holds ${levelLabel}${fieldBit}${institutionBit}.`);
+  }
+
+  const latestExperience = data.experiences[0];
+  if (latestExperience) {
+    const verb = latestExperience.isCurrent ? "Currently working as" : "Most recently worked as";
+    sentences.push(`${verb} ${latestExperience.title} at ${latestExperience.company}.`);
+  }
+
+  const topSkills = data.skills.slice(0, 6).map((s) => s.skill.name);
+  if (topSkills.length > 0) {
+    sentences.push(`Skilled in ${joinWithAnd(topSkills)}.`);
+  }
+
+  if (data.preferredRoles.length > 0) {
+    sentences.push(`Looking for opportunities as ${joinWithAnd(data.preferredRoles)}.`);
+  }
+
+  const summary = sentences.join(" ").trim();
+  if (!summary) {
+    return { ok: false, message: "Add a headline, education, or skills first so we have something to summarize." };
+  }
+  return { ok: true, summary };
+}
+
 const CURRENT_YEAR = new Date().getFullYear();
 const EDUCATION_LEVELS = ["SECONDARY", "HIGHER_SECONDARY", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE", "DOCTORATE", "CERTIFICATE_PROGRAM", "OTHER"] as const;
+const MANDATORY_EDUCATION_LEVELS = ["SECONDARY", "HIGHER_SECONDARY", "UNDERGRADUATE"] as const;
+const EXTRA_EDUCATION_LEVELS = ["POSTGRADUATE", "DOCTORATE", "DIPLOMA", "CERTIFICATE_PROGRAM", "OTHER"] as const;
+
+function levelRequiresBoard(level: string) {
+  return level === "SECONDARY" || level === "HIGHER_SECONDARY";
+}
 
 const educationSchema = z
   .object({
     level: z.enum(EDUCATION_LEVELS),
     institutionName: z.string().trim().min(2, "Enter an institution name.").max(150),
     degree: z.string().trim().min(2, "Enter a degree or qualification.").max(120),
-    fieldOfStudy: z.string().trim().max(120).optional(),
-    startYear: z.coerce.number().int().min(1970).max(CURRENT_YEAR + 1).optional(),
-    endYear: z.coerce.number().int().min(1970).max(CURRENT_YEAR + 10).optional(),
-    gradeValue: z.string().trim().max(30).optional(),
+    fieldOfStudy: z.string().trim().min(2, "Enter a field of study or stream.").max(120),
+    board: z.string().trim().max(120).optional(),
+    startYear: z.coerce.number({ error: "Enter a valid start year." }).int().min(1970).max(CURRENT_YEAR + 1),
+    endYear: z.coerce.number({ error: "Enter a valid end year." }).int().min(1970).max(CURRENT_YEAR + 10),
+    gradeValue: z.string().trim().min(1, "Enter your grade, percentage, or CGPA.").max(30),
   })
-  .refine((data) => !data.startYear || !data.endYear || data.endYear >= data.startYear, {
-    message: "End year can't be before start year.",
-    path: ["endYear"],
+  .refine((data) => data.endYear >= data.startYear, { message: "End year can't be before start year.", path: ["endYear"] })
+  .refine((data) => !levelRequiresBoard(data.level) || (data.board ?? "").length > 0, {
+    message: "Enter your board, e.g. CBSE, ICSE, or State Board.",
+    path: ["board"],
   });
 
-export async function addEducationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const { profile } = await requireCandidateProfile();
-  const parsed = educationSchema.safeParse({
-    level: formData.get("level") || "UNDERGRADUATE",
+export type EducationState = { ok: boolean; message?: string; fieldErrors?: Record<string, string> } | undefined;
+
+function educationFieldErrors(error: z.ZodError): Record<string, string> {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path[0]?.toString();
+    if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+  }
+  return fieldErrors;
+}
+
+function parseEducationForm(formData: FormData, level: string) {
+  return educationSchema.safeParse({
+    level,
     institutionName: formData.get("institutionName"),
     degree: formData.get("degree"),
-    fieldOfStudy: formData.get("fieldOfStudy") || undefined,
-    startYear: formData.get("startYear") || undefined,
-    endYear: formData.get("endYear") || undefined,
-    gradeValue: formData.get("gradeValue") || undefined,
+    fieldOfStudy: formData.get("fieldOfStudy"),
+    board: formData.get("board") || undefined,
+    startYear: formData.get("startYear"),
+    endYear: formData.get("endYear"),
+    gradeValue: formData.get("gradeValue"),
   });
-  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the highlighted fields." };
+}
 
-  await prisma.education.create({ data: { candidateProfileId: profile.id, ...parsed.data } });
+/** Upserts the single row for a mandatory level (10th / 12th / UG) — one row per level, never duplicated. */
+export async function saveMandatoryEducationAction(
+  level: (typeof MANDATORY_EDUCATION_LEVELS)[number],
+  _prevState: EducationState,
+  formData: FormData
+): Promise<EducationState> {
+  const { profile } = await requireCandidateProfile();
+  const parsed = parseEducationForm(formData, level);
+  if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: educationFieldErrors(parsed.error) };
+
+  const data = {
+    institutionName: parsed.data.institutionName,
+    degree: parsed.data.degree,
+    fieldOfStudy: parsed.data.fieldOfStudy,
+    board: parsed.data.board || null,
+    startYear: parsed.data.startYear,
+    endYear: parsed.data.endYear,
+    gradeValue: parsed.data.gradeValue,
+  };
+
+  const existing = await prisma.education.findFirst({ where: { candidateProfileId: profile.id, level } });
+  if (existing) {
+    await prisma.education.update({ where: { id: existing.id }, data });
+  } else {
+    await prisma.education.create({ data: { candidateProfileId: profile.id, level, ...data } });
+  }
+  revalidatePath("/dashboard/profile");
+  return { ok: true, message: "Saved." };
+}
+
+export async function addEducationAction(_prevState: EducationState, formData: FormData): Promise<EducationState> {
+  const { profile } = await requireCandidateProfile();
+  const level = formData.get("level")?.toString() ?? "POSTGRADUATE";
+  const parsed = parseEducationForm(formData, level);
+  if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: educationFieldErrors(parsed.error) };
+
+  await prisma.education.create({
+    data: {
+      candidateProfileId: profile.id,
+      level: parsed.data.level,
+      institutionName: parsed.data.institutionName,
+      degree: parsed.data.degree,
+      fieldOfStudy: parsed.data.fieldOfStudy,
+      board: parsed.data.board || null,
+      startYear: parsed.data.startYear,
+      endYear: parsed.data.endYear,
+      gradeValue: parsed.data.gradeValue,
+    },
+  });
   revalidatePath("/dashboard/profile");
   return { ok: true };
 }
@@ -194,30 +380,25 @@ export async function deleteExperienceAction(experienceId: string) {
   revalidatePath("/dashboard/profile");
 }
 
-const skillSchema = z.object({
-  skillName: z.string().trim().min(1).max(60),
-  proficiency: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]),
+const skillsSchema = z.object({
+  skillNames: z.array(z.string().trim().min(1).max(60)).min(1, "Choose at least one skill."),
 });
 
-export async function addSkillAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+/** Adds one or more skills at once — no per-skill form submission, no proficiency. */
+export async function addSkillsAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const { profile } = await requireCandidateProfile();
-  const parsed = skillSchema.safeParse({
-    skillName: formData.get("skillName"),
-    proficiency: formData.get("proficiency") || "BEGINNER",
-  });
-  if (!parsed.success) return { ok: false, message: "Enter a skill name." };
+  const raw = formData.getAll("skillNames").map(String).filter(Boolean);
+  const parsed = skillsSchema.safeParse({ skillNames: raw });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Choose at least one skill." };
 
-  const skill = await prisma.skill.upsert({
-    where: { name: parsed.data.skillName },
-    update: {},
-    create: { name: parsed.data.skillName },
-  });
-
-  await prisma.candidateSkill.upsert({
-    where: { candidateProfileId_skillId: { candidateProfileId: profile.id, skillId: skill.id } },
-    update: { proficiency: parsed.data.proficiency },
-    create: { candidateProfileId: profile.id, skillId: skill.id, proficiency: parsed.data.proficiency },
-  });
+  for (const name of parsed.data.skillNames) {
+    const skill = await prisma.skill.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.candidateSkill.upsert({
+      where: { candidateProfileId_skillId: { candidateProfileId: profile.id, skillId: skill.id } },
+      update: {},
+      create: { candidateProfileId: profile.id, skillId: skill.id },
+    });
+  }
 
   revalidatePath("/dashboard/profile");
   return { ok: true };
