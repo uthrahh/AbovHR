@@ -4,6 +4,16 @@ A career platform for finding jobs and internships, planning your next role, clo
 
 **Live demo:** https://abovhr.vercel.app (seeded with fictional demo data — see accounts below)
 
+## Key features
+
+- **Job discovery & transparent matching** — keyword/location/filter search plus a deterministic, explainable match score (no black-box "AI" claims).
+- **Structured candidate profile** — basic info, education (10th/12th/undergraduate required, additional levels optional), work experience, skills, projects, certifications, languages, links, volunteering, publications, and awards. Field-level validation throughout, with a rule-based "generate summary" draft built from the candidate's own data.
+- **Resume-free ATS applications** — applying shares only the profile sections a job actually requests; a candidate can check an ATS keyword-match score against any listing before applying, computed from their structured profile, not an uploaded file.
+- **Quick-fill import** — pre-fill profile fields from a pasted/PDF resume or an official LinkedIn data export (CSV); imported data only fills empty fields and stays fully editable before saving.
+- **Employer ATS pipeline** — job posting, an 8-stage applicant pipeline, internal notes, and per-candidate match scores.
+- **Career tools** — a short career assessment, career-path pages with skill-gap analysis, and structured learning paths with progress tracking.
+- **Institution dashboard**, **admin panel**, and **installable PWA app shell** (the deployed app renders as a native-feeling app when added to a phone's home screen, distinct from the marketing site).
+
 Full product/engineering documentation lives in [`docs/`](docs/):
 
 - [`docs/architecture.md`](docs/architecture.md) — system architecture, feature map, page map, database schema, auth/RBAC model, API surface, and what's explicitly *not* implemented yet.
